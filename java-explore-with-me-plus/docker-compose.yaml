@@ -30,3 +30,17 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/statsdb
       - SPRING_DATASOURCE_USERNAME=dbuser
       - SPRING_DATASOURCE_PASSWORD=12345
+
+  ewm-main-service:
+    build: ./ewm-main-service
+    container_name: ewm-main-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      stats-service:
+        condition: service_started
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/ewmdb
+      - SPRING_DATASOURCE_USERNAME=dbuser
+      - SPRING_DATASOURCE_PASSWORD=12345
+      - STATS_SERVER_URL=http://stats-service:9090
