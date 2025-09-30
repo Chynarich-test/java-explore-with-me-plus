@@ -19,7 +19,9 @@ services:
 
 
   stats-server:
-    build: ./stats-service/stats-server
+    build:
+      context: ./stats-service/stats-server
+      dockerfile: Dockerfile
     container_name: stats-service
     ports:
       - "9090:9090"
@@ -32,7 +34,9 @@ services:
       - SPRING_DATASOURCE_PASSWORD=12345
 
   ewm-service:
-    build: ./ewm-main-service
+    build:
+      context: ./ewm-main-service
+      dockerfile: Dockerfile
     container_name: ewm-main-service
     ports:
       - "8080:8080"
