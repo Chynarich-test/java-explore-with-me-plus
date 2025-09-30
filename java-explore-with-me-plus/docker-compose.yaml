@@ -22,6 +22,7 @@ services:
     build:
       context: ./stats-service/stats-server
       dockerfile: Dockerfile
+    image: ewm-stats-server
     container_name: stats-service
     ports:
       - "9090:9090"
@@ -37,6 +38,7 @@ services:
     build:
       context: ./ewm-main-service
       dockerfile: Dockerfile
+    image: ewn-service
     container_name: ewm-main-service
     ports:
       - "8080:8080"
