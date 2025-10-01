@@ -26,7 +26,7 @@ class EndpointHitDtoTest {
         EndpointHitDto hit = EndpointHitDto.builder()
                 .id(1)
                 .app("ewm-main-service")
-                .url("/events/1")
+                .uri("/events/1")
                 .ip("192.163.0.1")
                 .timestamp(time)
                 .build();
@@ -63,14 +63,14 @@ class EndpointHitDtoTest {
         assertThat(this.json.parse(content)).isEqualTo(EndpointHitDto.builder()
                 .id(1)
                 .app("ewm-main-service")
-                .url("/events/1")
+                .uri("/events/1")
                 .ip("192.163.0.1")
                 .timestamp(time)
                 .build());
 
         assertThat(this.json.parseObject(content).getId()).isEqualTo(1);
         assertThat(this.json.parseObject(content).getApp()).isEqualTo("ewm-main-service");
-        assertThat(this.json.parseObject(content).getUrl()).isEqualTo("/events/1");
+        assertThat(this.json.parseObject(content).getUri()).isEqualTo("/events/1");
         assertThat(this.json.parseObject(content).getIp()).isEqualTo("192.163.0.1");
         assertThat(this.json.parseObject(content).getTimestamp()).isEqualTo(time);
     }
