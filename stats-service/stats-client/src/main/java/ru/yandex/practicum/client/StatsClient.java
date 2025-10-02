@@ -4,13 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.HttpStatusCodeException;
+import ru.yandex.practicum.client.exception.StatsClientException;
 import ru.yandex.practicum.dto.EndpointHitDto;
-import ru.yandex.practicum.dto.ViewStats;
+import ru.yandex.practicum.dto.ViewStatsDto;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -41,7 +43,7 @@ public class StatsClient {
         }
     }
 
-    public List<ViewStats> getStats(LocalDateTime start,
+    public List<ViewStatsDto> getStats(LocalDateTime start,
                                     LocalDateTime end,
                                     List<String> uris,
                                     boolean unique) {
@@ -59,7 +61,7 @@ public class StatsClient {
                         }
                         return uriBuilder.build();
                     }))
-                    .body(new org.springframework.core.ParameterizedTypeReference<List<ViewStats>>() {});
+                    .body(new org.springframework.core.ParameterizedTypeReference<List<ViewStatsDto>>() {});
         } catch (RestClientException e) {
             log.error("Не удалось получить статистику из StatsService", e);
             throw new StatsClientException("Не удалось получить статистику из StatsService", e);
@@ -69,14 +71,23 @@ public class StatsClient {
     private RestClient.ResponseSpec handleErrors(RestClient.RequestHeadersSpec<?> request) {
         return request.retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                    String errorBody = res.getBodyAsString(StandardCharsets.UTF_8);
+                    String errorBody = readBodyAsString(res);
                     throw new StatsClientException("Ошибка клиента (4xx) при обращении к StatsService: "
                             + (errorBody.isBlank() ? "сообщение ошибки не предоставлено" : errorBody));
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-                    String errorBody = res.getBodyAsString(StandardCharsets.UTF_8);
+                    String errorBody = readBodyAsString(res);
                     throw new StatsClientException("Ошибка сервера (5xx) в StatsService: "
                             + (errorBody.isBlank() ? "сообщение ошибки не предоставлено" : errorBody));
                 });
+    }
+
+    private String readBodyAsString(ClientHttpResponse res) {
+        try (var reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(res.getBody(), StandardCharsets.UTF_8))) {
+            return reader.lines().collect(java.util.stream.Collectors.joining("\n"));
+        } catch (Exception e) {
+            return "не удалось прочитать тело ответа";
+        }
     }
 }
