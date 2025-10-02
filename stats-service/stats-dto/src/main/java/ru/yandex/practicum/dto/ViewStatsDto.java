@@ -10,6 +10,6 @@ import lombok.*;
 @Setter
 public class ViewStatsDto {
     private String app;
-    private String url;
-    private int hits;
+    private String uri;
+    private Long hits;
 }

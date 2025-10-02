@@ -46,8 +46,8 @@ public class StatsRepository {
     private ViewStatsDto mapRowToViewStatsDto(ResultSet resultSet, int rowNum) throws SQLException {
         return ViewStatsDto.builder()
                 .app(resultSet.getString("app"))
-                .url(resultSet.getString("uri"))
-                .hits(resultSet.getInt("count"))
+                .uri(resultSet.getString("uri"))
+                .hits(resultSet.getLong("count"))
                 .build();
     }
 
