@@ -2,9 +2,10 @@ package ru.yandex.practicum.repository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
@@ -15,15 +16,11 @@ import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
 @Slf4j
 public class StatsRepositoryImpl implements StatsRepository {
-
-    private final JdbcTemplate jdbcTemplate;
-
     private static final RowMapper<EndpointHit> HIT_ROW_MAPPER = (rs, rowNum) ->
             EndpointHit.builder()
                     .id(rs.getLong("id"))
@@ -32,13 +29,14 @@ public class StatsRepositoryImpl implements StatsRepository {
                     .ip(rs.getString("ip"))
                     .timestamp(rs.getTimestamp("timestamp").toLocalDateTime())
                     .build();
-
     private static final RowMapper<ViewStatsDto> STATS_ROW_MAPPER = (rs, rowNum) ->
             ViewStatsDto.builder()
                     .app(rs.getString("app"))
                     .uri(rs.getString("uri"))
-                    .hits(rs.getLong("hits"))
+                    .hits(rs.getLong("count"))
                     .build();
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public EndpointHit save(EndpointHit hit) {
@@ -59,78 +57,28 @@ public class StatsRepositoryImpl implements StatsRepository {
         return hit;
     }
 
-    @Override
-    public Optional<EndpointHit> findById(Long id) {
-        String sql = "SELECT * FROM hits WHERE id = ?";
-        try {
-            EndpointHit hit = jdbcTemplate.queryForObject(sql, HIT_ROW_MAPPER, id);
-            return Optional.ofNullable(hit);
-        } catch (EmptyResultDataAccessException e) {
-            return Optional.empty();
+    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
+        StringBuilder sqlBuilder = new StringBuilder();
+        if (unique) {
+            sqlBuilder.append("select app, uri, count(distinct ip) as count");
+        } else {
+            sqlBuilder.append("select app, uri, count(ip) as count");
         }
-    }
 
-    @Override
-    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris) {
-        String sql;
-        Object[] params;
+        sqlBuilder.append(" from hits where timestamp between :start and :end");
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("start", start)
+                .addValue("end", end);
 
         if (uris != null && !uris.isEmpty()) {
-            sql = "SELECT app, uri, COUNT(ip) as hits " +
-                    "FROM hits " +
-                    "WHERE timestamp BETWEEN ? AND ? " +
-                    "AND uri IN (" + buildPlaceholders(uris.size()) + ") " +
-                    "GROUP BY app, uri " +
-                    "ORDER BY hits DESC";
-            params = buildParams(start, end, uris);
-        } else {
-            sql = "SELECT app, uri, COUNT(ip) as hits " +
-                    "FROM hits " +
-                    "WHERE timestamp BETWEEN ? AND ? " +
-                    "GROUP BY app, uri " +
-                    "ORDER BY hits DESC";
-            params = new Object[]{Timestamp.valueOf(start), Timestamp.valueOf(end)};
+            sqlBuilder.append(" and uri in (:uris)");
+            params.addValue("uris", uris);
         }
 
-        return jdbcTemplate.query(sql, STATS_ROW_MAPPER, params);
-    }
+        sqlBuilder.append(" group by app, uri order by count desc");
 
-    @Override
-    public List<ViewStatsDto> getUniqueStats(LocalDateTime start, LocalDateTime end, List<String> uris) {
-        String sql;
-        Object[] params;
 
-        if (uris != null && !uris.isEmpty()) {
-            sql = "SELECT app, uri, COUNT(DISTINCT ip) as hits " +
-                    "FROM hits " +
-                    "WHERE timestamp BETWEEN ? AND ? " +
-                    "AND uri IN (" + buildPlaceholders(uris.size()) + ") " +
-                    "GROUP BY app, uri " +
-                    "ORDER BY hits DESC";
-            params = buildParams(start, end, uris);
-        } else {
-            sql = "SELECT app, uri, COUNT(DISTINCT ip) as hits " +
-                    "FROM hits " +
-                    "WHERE timestamp BETWEEN ? AND ? " +
-                    "GROUP BY app, uri " +
-                    "ORDER BY hits DESC";
-            params = new Object[]{Timestamp.valueOf(start), Timestamp.valueOf(end)};
-        }
-
-        return jdbcTemplate.query(sql, STATS_ROW_MAPPER, params);
-    }
-
-    private String buildPlaceholders(int count) {
-        return String.join(",", java.util.Collections.nCopies(count, "?"));
-    }
-
-    private Object[] buildParams(LocalDateTime start, LocalDateTime end, List<String> uris) {
-        Object[] params = new Object[2 + uris.size()];
-        params[0] = Timestamp.valueOf(start);
-        params[1] = Timestamp.valueOf(end);
-        for (int i = 0; i < uris.size(); i++) {
-            params[2 + i] = uris.get(i);
-        }
-        return params;
+        return namedParameterJdbcTemplate.query(sqlBuilder.toString(), params, STATS_ROW_MAPPER);
     }
 }

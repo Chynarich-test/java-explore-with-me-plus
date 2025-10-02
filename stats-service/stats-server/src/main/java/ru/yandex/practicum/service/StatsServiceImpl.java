@@ -57,17 +57,10 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
-        if (start.isAfter(end)) {
-            log.warn("Запрошена статистика для неправильного временного диапазона: start={}, end={}", start, end);
-            throw new ValidationException("Запрошена статистика для неправильного временного диапазона");
-        }
+        validateTimeRange(start, end);
 
         log.info("Запрос статистики: start={}, end={}, uris={}, unique={}", start, end, uris.size(), unique);
 
-        if (unique) {
-            return statsRepository.getUniqueStats(start, end, uris);
-        } else {
-            return statsRepository.getStats(start, end, uris);
-        }
+        return statsRepository.getStats(start, end, uris, unique);
     }
 }
