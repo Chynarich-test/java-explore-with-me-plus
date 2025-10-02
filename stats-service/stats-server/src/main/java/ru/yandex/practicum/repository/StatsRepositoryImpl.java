@@ -33,7 +33,7 @@ public class StatsRepositoryImpl implements StatsRepository {
             ViewStatsDto.builder()
                     .app(rs.getString("app"))
                     .uri(rs.getString("uri"))
-                    .hits(rs.getLong("hits"))
+                    .hits(rs.getLong("count"))
                     .build();
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final JdbcTemplate jdbcTemplate;
