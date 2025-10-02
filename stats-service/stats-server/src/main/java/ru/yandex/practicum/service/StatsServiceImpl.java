@@ -64,6 +64,10 @@ public class StatsServiceImpl implements StatsService {
 
         log.info("Запрос статистики: start={}, end={}, uris={}, unique={}", start, end, uris.size(), unique);
 
-        return statsRepository.getStats(start, end, uris, unique);
+        if (unique) {
+            return statsRepository.getUniqueStats(start, end, uris);
+        } else {
+            return statsRepository.getStats(start, end, uris);
+        }
     }
 }

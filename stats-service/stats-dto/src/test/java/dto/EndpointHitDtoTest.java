@@ -39,8 +39,8 @@ class EndpointHitDtoTest {
         assertThat(this.json.write(hit)).extractingJsonPathStringValue("@.app")
                 .isEqualTo("ewm-main-service");
 
-        assertThat(this.json.write(hit)).hasJsonPathStringValue("@.url");
-        assertThat(this.json.write(hit)).extractingJsonPathStringValue("@.url")
+        assertThat(this.json.write(hit)).hasJsonPathStringValue("@.uri");
+        assertThat(this.json.write(hit)).extractingJsonPathStringValue("@.uri")
                 .isEqualTo("/events/1");
 
         assertThat(this.json.write(hit)).hasJsonPathStringValue("@.ip");
@@ -55,7 +55,7 @@ class EndpointHitDtoTest {
     @Test
     void deserialize() throws Exception {
         String content = "{\"id\":1,\"app\":\"ewm-main-service\"," +
-                "\"url\":\"/events/1\",\"ip\":\"192.163.0.1\"," +
+                "\"uri\":\"/events/1\",\"ip\":\"192.163.0.1\"," +
                 "\"timestamp\":\"2025-09-30 16:10:44\"}";
 
         LocalDateTime time = LocalDateTime.of(2025, 9, 30, 16, 10, 44);
