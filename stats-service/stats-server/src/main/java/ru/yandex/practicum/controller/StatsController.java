@@ -1,14 +1,16 @@
 package ru.yandex.practicum.controller;
 
 
+import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+import ru.yandex.practicum.dto.EndpointHitDto;
 import ru.yandex.practicum.dto.ViewStatsDto;
 import ru.yandex.practicum.service.StatsService;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,6 +21,21 @@ public class StatsController {
 
     public StatsController(StatsService statsService) {
         this.statsService = statsService;
+    }
+
+    @PostMapping("/hit")
+    public ResponseEntity<EndpointHitDto> saveHit(@Valid @RequestBody EndpointHitDto hitDto,
+                                                  UriComponentsBuilder uriComponentsBuilder) {
+        EndpointHitDto savedHit = statsService.saveHit(hitDto);
+
+        URI location = uriComponentsBuilder
+                .path("/hit/{id}")
+                .buildAndExpand(savedHit.getId())
+                .toUri();
+
+        return ResponseEntity
+                .created(location)
+                .body(savedHit);
     }
 
     @GetMapping("/stats")
