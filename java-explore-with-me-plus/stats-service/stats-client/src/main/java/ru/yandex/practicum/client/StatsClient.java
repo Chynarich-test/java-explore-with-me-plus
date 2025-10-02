@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.HttpStatusCodeException;
-import ru.practicum.stats.dto.EndpointHitDto;
-import ru.practicum.stats.dto.ViewStats;
+import ru.yandex.practicum.dto.EndpointHitDto;
+import ru.yandex.practicum.dto.ViewStats;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,21 +30,10 @@ public class StatsClient {
 
     public void saveHit(EndpointHitDto hitDto) {
         try {
-            restClient.post()
+            handleErrors(restClient.post()
                     .uri("/hit")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(hitDto)
-                    .retrieve()
-                    .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                        String errorBody = res.getBodyAsString(StandardCharsets.UTF_8);
-                        throw new StatsClientException("Ошибка клиента (4xx) при обращении к StatsService: "
-                                + (errorBody.isBlank() ? "сообшение ошибки не предоставлено" : errorBody));
-                    })
-                    .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-                        String errorBody = res.getBodyAsString(StandardCharsets.UTF_8);
-                        throw new StatsClientException("Ошибка сервера (5xx) в StatsService: "
-                                + (errorBody.isBlank() ? "сообшение ошибки не предоставлено" : errorBody));
-                    })
+                    .body(hitDto))
                     .toBodilessEntity();
         } catch (RestClientException e) {
             log.error("Не удалось отправить хит в StatsService", e);
@@ -57,7 +46,7 @@ public class StatsClient {
                                     List<String> uris,
                                     boolean unique) {
         try {
-            return restClient.get()
+            return handleErrors(restClient.get()
                     .uri(uriBuilder -> {
                         uriBuilder.path("/stats")
                                 .queryParam("start", start.format(FORMATTER))
@@ -69,22 +58,25 @@ public class StatsClient {
                             }
                         }
                         return uriBuilder.build();
-                    })
-                    .retrieve()
-                    .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                        String errorBody = res.getBodyAsString(StandardCharsets.UTF_8);
-                        throw new StatsClientException("Ошибка клиента (4xx) при обращении к StatsService: "
-                                + (errorBody.isBlank() ? "сообшение ошибки не предоставлено" : errorBody));
-                    })
-                    .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-                        String errorBody = res.getBodyAsString(StandardCharsets.UTF_8);
-                        throw new StatsClientException("Ошибка сервера (5xx) в StatsService: "
-                                + (errorBody.isBlank() ? "сообшение ошибки не предоставлено" : errorBody));
-                    })
+                    }))
                     .body(new org.springframework.core.ParameterizedTypeReference<List<ViewStats>>() {});
         } catch (RestClientException e) {
             log.error("Не удалось получить статистику из StatsService", e);
             throw new StatsClientException("Не удалось получить статистику из StatsService", e);
         }
+    }
+
+    private RestClient.ResponseSpec handleErrors(RestClient.RequestHeadersSpec<?> request) {
+        return request.retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
+                    String errorBody = res.getBodyAsString(StandardCharsets.UTF_8);
+                    throw new StatsClientException("Ошибка клиента (4xx) при обращении к StatsService: "
+                            + (errorBody.isBlank() ? "сообщение ошибки не предоставлено" : errorBody));
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    String errorBody = res.getBodyAsString(StandardCharsets.UTF_8);
+                    throw new StatsClientException("Ошибка сервера (5xx) в StatsService: "
+                            + (errorBody.isBlank() ? "сообщение ошибки не предоставлено" : errorBody));
+                });
     }
 }
