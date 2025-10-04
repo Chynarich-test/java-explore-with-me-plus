@@ -42,8 +42,8 @@ public class StatsServiceImpl implements StatsService {
         if (hitDto.getTimestamp() == null) {
             throw new ValidationException("Timestamp cannot be null");
         }
-        if (hitDto.getTimestamp().isAfter(LocalDateTime.now())) {
-            throw new ValidationException("Timestamp cannot be in the future");
+        if (hitDto.getTimestamp().isAfter(LocalDateTime.now().plusMinutes(1))) {
+            throw new ValidationException("Timestamp cannot be too far in the future");
         }
     }
 

@@ -21,10 +21,10 @@ import java.util.List;
 @Service
 public class StatsClient {
 
-    private final RestClient restClient;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final RestClient restClient;
 
-    public StatsClient(@Value("${stats-service.url}") String serverUrl) {
+    public StatsClient(@Value("${stats-service.url:http://localhost:9090}") String serverUrl) {
         this.restClient = RestClient.builder()
                 .baseUrl(serverUrl)
                 .build();
@@ -44,9 +44,9 @@ public class StatsClient {
     }
 
     public List<ViewStatsDto> getStats(LocalDateTime start,
-                                    LocalDateTime end,
-                                    List<String> uris,
-                                    boolean unique) {
+                                       LocalDateTime end,
+                                       List<String> uris,
+                                       boolean unique) {
         try {
             return handleErrors(restClient.get()
                     .uri(uriBuilder -> {
@@ -61,7 +61,8 @@ public class StatsClient {
                         }
                         return uriBuilder.build();
                     }))
-                    .body(new org.springframework.core.ParameterizedTypeReference<List<ViewStatsDto>>() {});
+                    .body(new org.springframework.core.ParameterizedTypeReference<List<ViewStatsDto>>() {
+                    });
         } catch (RestClientException e) {
             log.error("Не удалось получить статистику из StatsService", e);
             throw new StatsClientException("Не удалось получить статистику из StatsService", e);
