@@ -3,7 +3,7 @@ package ru.yandex.practicum.request.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.request.dto.*;
-import ru.yandex.practicum.request.service.RequestService;
+import ru.yandex.practicum.request.service.RequestServiceImpl;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RequestController {
 
-    private final RequestService service;
+    private final RequestServiceImpl service;
 
     @GetMapping("/requests")
     public List<RequestDto> getUserRequests(@PathVariable Long userId) {
