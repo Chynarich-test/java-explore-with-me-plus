@@ -38,10 +38,8 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public RequestDto createRequest(Long userId, Long eventId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден: id=" + userId));
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие не найдено: id=" + eventId));
+        User user = entityValidator.ensureExists(userRepository, id, "Пользователь");
+        Event event = entityValidator.ensureExists(eventRepository, eventId, "Событие");
 
         if (Objects.equals(event.getInitiator().getId(), userId)) {
             throw new ValidationException("Инициатор события не может создать заявку на участие в своём же событии");
@@ -72,8 +70,7 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     public RequestDto cancelRequest(Long userId, Long requestId) {
         entityValidator.ensureExists(userRepository, userId, "Пользователь");
-        Request request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new NotFoundException("Заявка не найдена: id=" + requestId));
+        Request request = entityValidator.ensureExists(requestRepository, requestId, "Заявка");
 
         if (!Objects.equals(request.getRequester().getId(), userId)) {
             throw new ValidationException("Пользователь может отменять только свои заявки");
@@ -87,8 +84,8 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public List<RequestDto> getEventRequests(Long userId, Long eventId) {
         entityValidator.ensureExists(userRepository, userId, "Пользователь");
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие не найдено: id=" + eventId));
+        Event event = entityValidator.ensureExists(eventRepository, eventId, "Событие");
+
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new NotFoundException("Только инициатор может просматривать заявки данного события");
         }
@@ -102,8 +99,7 @@ public class RequestServiceImpl implements RequestService {
     public EventRequestStatusUpdateResult changeRequestStatus(Long userId, Long eventId,
                                                               EventRequestStatusUpdateRequest updateRequest) {
         entityValidator.ensureExists(userRepository, userId, "Пользователь");
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие не найдено: id=" + eventId));
+        Event event = entityValidator.ensureExists(eventRepository, eventId, "Событие");
 
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new ValidationException("Только инициатор может менять статусы заявок");

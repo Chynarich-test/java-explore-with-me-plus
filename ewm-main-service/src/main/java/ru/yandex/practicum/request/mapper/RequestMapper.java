@@ -1,41 +1,26 @@
 package ru.yandex.practicum.request.mapper;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import ru.yandex.practicum.event.model.Event;
 import ru.yandex.practicum.request.dto.RequestDto;
 import ru.yandex.practicum.request.model.Request;
 import ru.yandex.practicum.request.model.RequestStatus;
 import ru.yandex.practicum.user.model.User;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
-@Component
-public class RequestMapper {
+@Mapper(componentModel = "spring")
+public interface RequestMapper {
 
-    public RequestDto toDto(Request pr) {
-        return RequestDto.builder()
-                .id(pr.getId())
-                .created(pr.getCreated())
-                .event(pr.getEvent().getId())
-                .requester(pr.getRequester().getId())
-                .status(pr.getStatus().name())
-                .build();
-    }
+    @Mapping(target = "event", source = "event.id")
+    @Mapping(target = "requester", source = "requester.id")
+    @Mapping(target = "status", expression = "java(request.getStatus().name())")
+    RequestDto toDto(Request request);
 
-    public List<RequestDto> toDtoList(List<Request> list) {
-        return list.stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
-    }
+    List<RequestDto> toDtoList(List<Request> requests);
 
-    public Request toNewEntity(Event event, User requester, RequestStatus status) {
-        return Request.builder()
-                .event(event)
-                .requester(requester)
-                .created(LocalDateTime.now())
-                .status(status)
-                .build();
-    }
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "created", expression = "java(java.time.LocalDateTime.now())")
+    Request toNewEntity(Event event, User requester, RequestStatus status);
 }

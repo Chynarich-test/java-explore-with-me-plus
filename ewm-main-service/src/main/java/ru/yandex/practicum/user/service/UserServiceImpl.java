@@ -5,7 +5,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.common.EntityValidator;
-import ru.yandex.practicum.exception.NotFoundException;
 import ru.yandex.practicum.exception.ValidationException;
 import ru.yandex.practicum.user.dto.NewUserRequest;
 import ru.yandex.practicum.user.dto.PageParams;
@@ -24,6 +23,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final EntityValidator entityValidator;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional
@@ -31,18 +31,17 @@ public class UserServiceImpl implements UserService {
         validateNewUserRequest(request);
         ensureEmailUnique(request.getEmail(), null);
 
-        User user = UserMapper.toEntity(request);
+        User user = userMapper.toEntity(request);
         setDefaultNameIfEmpty(user);
 
         User saved = userRepository.save(user);
-        return UserMapper.toDto(saved);
+        return userMapper.toDto(saved);
     }
 
     @Override
     public UserDto getUserById(Long id) {
-        return userRepository.findById(id)
-                .map(UserMapper::toDto)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + id + " не найден!"));
+        User user = entityValidator.ensureExists(userRepository, id, "Пользователь");
+        return userMapper.toDto(user);
     }
 
     @Override
@@ -55,7 +54,7 @@ public class UserServiceImpl implements UserService {
             users = userRepository.findAllBy(pageable);
         }
         return users.stream()
-                .map(UserMapper::toDto)
+                .map(userMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -69,18 +68,17 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto updateUser(Long id, UserDto userDto) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + id + " не найден!"));
+        User user = entityValidator.ensureExists(userRepository, id, "Пользователь");
 
         if (userDto.getEmail() != null && !userDto.getEmail().isBlank()) {
             ensureEmailUnique(userDto.getEmail(), id);
         }
 
-        UserMapper.updateEntityFromDto(user, userDto);
+        userMapper.updateEntityFromDto(userDto, user);
         setDefaultNameIfEmpty(user);
 
         User saved = userRepository.save(user);
-        return UserMapper.toDto(saved);
+        return userMapper.toDto(saved);
     }
 
     private void validateNewUserRequest(NewUserRequest req) {

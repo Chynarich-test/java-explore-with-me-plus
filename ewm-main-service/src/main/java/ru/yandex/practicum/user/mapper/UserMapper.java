@@ -1,30 +1,20 @@
 package ru.yandex.practicum.user.mapper;
 
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import ru.yandex.practicum.user.dto.NewUserRequest;
 import ru.yandex.practicum.user.dto.UserDto;
 import ru.yandex.practicum.user.model.User;
 
-public class UserMapper {
+@Mapper(componentModel = "spring")
+public interface UserMapper {
 
-    public static UserDto toDto(User user) {
-        if (user == null) return null;
-        return UserDto.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .name(user.getName())
-                .build();
-    }
+    UserDto toDto(User user);
 
-    public static User toEntity(NewUserRequest req) {
-        if (req == null) return null;
-        return User.builder()
-                .email(req.getEmail())
-                .name(req.getName())
-                .build();
-    }
+    User toEntity(NewUserRequest request);
 
-    public static void updateEntityFromDto(User user, UserDto dto) {
-        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
-        if (dto.getName() != null) user.setName(dto.getName());
-    }
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateEntityFromDto(UserDto dto, @MappingTarget User entity);
 }
