@@ -43,7 +43,7 @@ public class EventService {
     private final HttpServletRequest request;
 
     public List<EventShortDto> findEvents(UserEventsQuery query) {
-        List<EventShortDto> dtos = eventMapper.toEventsShortDto(eventRepository.findByInitiatorIdIn(query.userId(),
+        List<EventShortDto> dtos = eventMapper.toEventsShortDto(eventRepository.findByInitiatorId(query.userId(),
                 PageRequest.of(query.from() / query.size(), query.size())));
 
         if (dtos != null && !dtos.isEmpty()) {
