@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.client.StatsClient;
+import ru.yandex.practicum.common.EntityValidator;
 import ru.yandex.practicum.dto.EndpointHitDto;
 import ru.yandex.practicum.dto.ViewStatsDto;
 import ru.yandex.practicum.event.dao.EventRepository;
@@ -42,6 +43,7 @@ public class EventService {
 
     private final StatsClient statsClient;
     private final HttpServletRequest request;
+    private final EntityValidator entityValidator;
 
     public List<EventShortDto> findEvents(UserEventsQuery query) {
         List<EventShortDto> dtos = eventMapper.toEventsShortDto(eventRepository.findByInitiatorId(query.userId(),
@@ -60,7 +62,7 @@ public class EventService {
 
     @Transactional
     public EventShortDto createEvent(long userId, NewEventDto eventDto) {
-        User owner = findById(userRepository, userId, "User");
+        User owner = entityValidator.ensureExists(userRepository, userId, "User");
 
         if (eventDto.getEventDate() != null) {
             LocalDateTime now = LocalDateTime.now();
@@ -84,11 +86,6 @@ public class EventService {
             dto.setViews(hits.getOrDefault(uri, 0L));
         }
         return dto;
-    }
-
-    private <T, E extends JpaRepository<T, Long>> T findById(E repo, long id, String startWord) {
-        return repo.findById(id).orElseThrow(() ->
-                new NotFoundException(startWord + " with id=" + id + " was not found"));
     }
 
     private Event findByPublicId(long eventId) {
@@ -176,7 +173,7 @@ public class EventService {
 
     @Transactional
     public EventFullDto moderateEvent(Long eventId, UpdateEventAdminRequest adminRequest) {
-        Event event = findById(eventRepository, eventId, "Event");
+        Event event = entityValidator.ensureExists(eventRepository, eventId, "Event");
 
         if (adminRequest.getEventDate() != null) {
             LocalDateTime now = LocalDateTime.now();

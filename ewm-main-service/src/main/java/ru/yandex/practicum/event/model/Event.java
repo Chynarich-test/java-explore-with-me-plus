@@ -46,7 +46,7 @@ public class Event {
     @Column(name = "paid")
     private boolean paid;
     @Column(name = "participant_limit")
-    private int participantLimit;
+    private Integer participantLimit;
     @Column(name = "request_moderation")
     private boolean requestModeration;
     @Column(name = "state", nullable = false)

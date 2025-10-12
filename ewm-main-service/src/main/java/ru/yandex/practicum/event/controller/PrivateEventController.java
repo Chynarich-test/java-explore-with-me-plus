@@ -14,6 +14,10 @@ import ru.yandex.practicum.event.dto.NewEventDto;
 import ru.yandex.practicum.event.dto.UpdateEventUserRequest;
 import ru.yandex.practicum.event.dto.request.UserEventsQuery;
 import ru.yandex.practicum.event.service.EventService;
+import ru.yandex.practicum.request.dto.EventRequestStatusUpdateRequest;
+import ru.yandex.practicum.request.dto.EventRequestStatusUpdateResult;
+import ru.yandex.practicum.request.dto.RequestDto;
+import ru.yandex.practicum.request.service.RequestServiceImpl;
 
 import java.util.List;
 
@@ -24,6 +28,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PrivateEventController {
     private final EventService eventService;
+    private final RequestServiceImpl requestService;
 
     @GetMapping
     public List<EventShortDto> findUserEvents(@PathVariable long userId,
@@ -53,4 +58,16 @@ public class PrivateEventController {
         return eventService.updateUserEvent(userId, eventId, updateRequest);
     }
 
+    @GetMapping("/{eventId}/requests")
+    public List<RequestDto> getEventRequests(@PathVariable Long userId,
+                                             @PathVariable Long eventId) {
+        return requestService.getEventRequests(userId, eventId);
+    }
+
+    @PatchMapping("/{eventId}/requests")
+    public EventRequestStatusUpdateResult updateStatuses(@PathVariable Long userId,
+                                                         @PathVariable Long eventId,
+                                                         @RequestBody EventRequestStatusUpdateRequest request) {
+        return requestService.changeRequestStatus(userId, eventId, request);
+    }
 }
