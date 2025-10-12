@@ -5,7 +5,6 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.client.StatsClient;
 import ru.yandex.practicum.common.EntityValidator;
@@ -24,7 +23,7 @@ import ru.yandex.practicum.event.model.Event;
 import ru.yandex.practicum.event.model.EventState;
 import ru.yandex.practicum.exception.ExistException;
 import ru.yandex.practicum.exception.NotFoundException;
-import ru.yandex.practicum.user.dao.UserRepository;
+import ru.yandex.practicum.user.repository.UserRepository;
 import ru.yandex.practicum.user.model.User;
 
 import java.time.LocalDateTime;

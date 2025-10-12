@@ -2,7 +2,7 @@ package ru.yandex.practicum.event.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.yandex.practicum.category.model.EventCategory;
+import ru.yandex.practicum.category.model.Category;
 import ru.yandex.practicum.location.model.Location;
 import ru.yandex.practicum.request.model.Request;
 import ru.yandex.practicum.user.model.User;
@@ -28,7 +28,7 @@ public class Event {
     private String description;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
-    private EventCategory category;
+    private Category category;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "initiator_id", nullable = false)
     private User initiator;
