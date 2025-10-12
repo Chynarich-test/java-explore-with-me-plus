@@ -1,13 +1,13 @@
-package ru.yandex.practicum.category.dto;
+package ru.yandex.practicum.user.dto;
 
 import lombok.*;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CategoryDto {
+public class UserDto {
     private Long id;
+    private String email;
     private String name;
 }

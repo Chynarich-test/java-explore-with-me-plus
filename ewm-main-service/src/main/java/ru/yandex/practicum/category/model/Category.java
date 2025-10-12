@@ -3,18 +3,19 @@ package ru.yandex.practicum.category.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-@Builder
 @Entity
-@Table(name = "categories", schema = "public")
+@Table(name = "categories", uniqueConstraints = @UniqueConstraint(name = "uq_category_name", columnNames = "name"))
 @Getter
 @Setter
-@ToString
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventCategory {
+public class Category {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "name", nullable = false)
+
+    @Column(nullable = false, length = 50)
     private String name;
 }
