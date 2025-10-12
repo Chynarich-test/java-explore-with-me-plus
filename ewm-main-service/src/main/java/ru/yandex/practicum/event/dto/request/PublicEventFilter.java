@@ -16,7 +16,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class PublicEventFilter {
-    @Size(min = 1, max = 7000)
+    @Size(min = 1, max = 7000, message = "Текст поиска должен содержать от 1 до 7000 символов")
     private String text;
 
     private List<Long> categories;
@@ -33,9 +33,9 @@ public class PublicEventFilter {
 
     private EventSort sort;
 
-    @PositiveOrZero
+    @PositiveOrZero(message = "Параметр 'from' не может быть отрицательным")
     private Integer from = 0;
 
-    @Positive
+    @Positive(message = "Параметр 'size' должен быть положительным числом")
     private Integer size = 10;
 }

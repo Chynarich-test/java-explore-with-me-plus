@@ -12,21 +12,21 @@ import java.time.LocalDateTime;
 
 @Data
 public class NewEventDto {
-    @NotBlank
+    @NotBlank(message = "Аннотация не может быть пустой")
     private String annotation;
-    @Positive
+    @Positive(message = "ID категории должен быть положительным числом")
     private long category;
-    @NotBlank
+    @NotBlank(message = "Описание не может быть пустым")
     private String description;
-    @NotNull
+    @NotNull(message = "Дата события обязательна")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
-    @NotNull
+    @NotNull(message = "Местоположение обязательно")
     private LocationDto location;
     private Boolean paid;
-    @PositiveOrZero
+    @PositiveOrZero(message = "Лимит участников не может быть отрицательным")
     private int participantLimit;
     private Boolean requestModeration;
-    @NotBlank
+    @NotBlank(message = "Заголовок не может быть пустым")
     private String title;
 }

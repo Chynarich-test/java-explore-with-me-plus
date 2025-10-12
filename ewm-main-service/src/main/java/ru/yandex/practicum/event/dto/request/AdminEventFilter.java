@@ -27,9 +27,9 @@ public class AdminEventFilter {
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime rangeEnd;
 
-    @PositiveOrZero
+    @PositiveOrZero(message = "Параметр 'from' не может быть отрицательным")
     private Integer from = 0;
 
-    @Positive
+    @Positive(message = "Параметр 'size' должен быть положительным числом")
     private Integer size = 10;
 }

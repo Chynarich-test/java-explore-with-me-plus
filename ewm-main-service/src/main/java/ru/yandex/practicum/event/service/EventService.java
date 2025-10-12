@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.client.StatsClient;
 import ru.yandex.practicum.dto.EndpointHitDto;
@@ -59,8 +60,7 @@ public class EventService {
 
     @Transactional
     public EventShortDto createEvent(long userId, NewEventDto eventDto) {
-        User owner = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + " не найден"));
+        User owner = findById(userRepository, userId, "User");
 
         if (eventDto.getEventDate() != null) {
             LocalDateTime now = LocalDateTime.now();
@@ -86,9 +86,9 @@ public class EventService {
         return dto;
     }
 
-    private Event findById(long eventId) {
-        return eventRepository.findById(eventId).orElseThrow(() ->
-                new NotFoundException("Event with id=" + eventId + " was not found"));
+    private <T, E extends JpaRepository<T, Long>> T findById(E repo, long id, String startWord) {
+        return repo.findById(id).orElseThrow(() ->
+                new NotFoundException(startWord + " with id=" + id + " was not found"));
     }
 
     private Event findByPublicId(long eventId) {
@@ -176,7 +176,7 @@ public class EventService {
 
     @Transactional
     public EventFullDto moderateEvent(Long eventId, UpdateEventAdminRequest adminRequest) {
-        Event event = findById(eventId);
+        Event event = findById(eventRepository, eventId, "Event");
 
         if (adminRequest.getEventDate() != null) {
             LocalDateTime now = LocalDateTime.now();
