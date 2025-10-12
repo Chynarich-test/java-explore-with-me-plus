@@ -3,14 +3,16 @@ package ru.yandex.practicum.request.model;
 import jakarta.persistence.*;
 import lombok.*;
 import ru.yandex.practicum.user.model.User;
+import ru.yandex.practicum.event.model.Event;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "participation_requests")
+@Table(name = "requests", schema = "public")
 @Getter
 @Setter
 @Builder
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class Request {
