@@ -66,9 +66,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<CategoryDto> getCategories(int from, int size) {
-        if (from < 0 || size <= 0) {
-            throw new ValidationException("Неверные параметры пагинации!");
-        }
 
         int page = from / size;
         List<Category> list = categoryRepository.findAll(PageRequest.of(page, size)).getContent();
