@@ -7,6 +7,7 @@ import ru.yandex.practicum.request.dto.RequestDto;
 import java.util.List;
 
 public interface RequestService {
+
     List<RequestDto> getUserRequests(Long userId);
 
     RequestDto createRequest(Long userId, Long eventId);
@@ -17,4 +18,5 @@ public interface RequestService {
 
     EventRequestStatusUpdateResult changeRequestStatus(Long userId, Long eventId,
                                                        EventRequestStatusUpdateRequest updateRequest);
+
 }

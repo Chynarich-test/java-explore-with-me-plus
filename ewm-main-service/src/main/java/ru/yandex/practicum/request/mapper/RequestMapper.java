@@ -23,4 +23,5 @@ public interface RequestMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "created", expression = "java(java.time.LocalDateTime.now())")
     Request toNewEntity(Event event, User requester, RequestStatus status);
+
 }

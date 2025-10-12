@@ -20,4 +20,5 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     default List<User> findAllBy(Pageable pageable) {
         return findAll(UserSpecs.fetchAll(), pageable).getContent();
     }
+
 }

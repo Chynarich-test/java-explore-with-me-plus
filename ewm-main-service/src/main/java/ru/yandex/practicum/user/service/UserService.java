@@ -7,6 +7,7 @@ import ru.yandex.practicum.user.dto.UserDto;
 import java.util.List;
 
 public interface UserService {
+
     UserDto createUser(NewUserRequest request);
 
     UserDto getUserById(Long id);
@@ -16,4 +17,5 @@ public interface UserService {
     void deleteUser(Long id);
 
     UserDto updateUser(Long id, UserDto userDto);
+
 }

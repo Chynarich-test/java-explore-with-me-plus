@@ -19,6 +19,7 @@ public class UserSpecs {
         return (root, query, cb) -> root.get("id").in(ids);
     }
 
+    // Оставил для возможного расширения
     public static Specification<User> fetchAll() {
         return (root, query, cb) -> {
             if (User.class.equals(query.getResultType())) {
