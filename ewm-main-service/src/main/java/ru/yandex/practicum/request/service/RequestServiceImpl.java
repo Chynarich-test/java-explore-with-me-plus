@@ -7,6 +7,7 @@ import ru.yandex.practicum.common.EntityValidator;
 import ru.yandex.practicum.event.model.Event;
 import ru.yandex.practicum.event.model.EventState;
 import ru.yandex.practicum.event.dao.EventRepository;
+import ru.yandex.practicum.exception.ConflictException;
 import ru.yandex.practicum.exception.NotFoundException;
 import ru.yandex.practicum.exception.ValidationException;
 import ru.yandex.practicum.request.dto.*;
@@ -51,9 +52,8 @@ public class RequestServiceImpl implements RequestService {
         }
 
         long confirmed = requestRepository.countConfirmedRequests(eventId);
-        if (event.getParticipantLimit() != null && event.getParticipantLimit() > 0
-                && confirmed >= event.getParticipantLimit()) {
-            throw new ValidationException("Достигнут лимит участников события");
+        if (confirmed >= event.getParticipantLimit()) {
+            throw new ConflictException("Достигнут лимит участников события");
         }
 
         RequestStatus initialStatus = RequestStatus.PENDING;
@@ -106,13 +106,16 @@ public class RequestServiceImpl implements RequestService {
             throw new ValidationException("Только инициатор может менять статусы заявок");
         }
 
-        String statusStr = Optional.ofNullable(updateRequest.getStatus()).orElse("").toUpperCase(Locale.ROOT);
+        String statusStr = Optional.ofNullable(updateRequest.getStatus())
+                .orElse("")
+                .toUpperCase(Locale.ROOT);
         RequestStatus targetStatus;
         try {
             targetStatus = RequestStatus.valueOf(statusStr);
         } catch (IllegalArgumentException ex) {
             throw new ValidationException("Недопустимый статус: " + updateRequest.getStatus());
         }
+
         if (!(targetStatus == RequestStatus.CONFIRMED || targetStatus == RequestStatus.REJECTED)) {
             throw new ValidationException("Можно массово устанавливать только CONFIRMED или REJECTED");
         }
@@ -137,9 +140,8 @@ public class RequestServiceImpl implements RequestService {
 
         if (targetStatus == RequestStatus.CONFIRMED) {
             for (Request req : requests) {
-                if (req.getStatus() != RequestStatus.PENDING) {
-                    continue;
-                }
+                if (req.getStatus() != RequestStatus.PENDING) continue;
+
                 if (limit == null || limit == 0 || confirmedNow < limit) {
                     req.setStatus(RequestStatus.CONFIRMED);
                     confirmedNow++;
@@ -158,14 +160,12 @@ public class RequestServiceImpl implements RequestService {
             }
         }
 
-        requestRepository.saveAll(requests);
-
-        List<RequestDto> confirmedDto = mapper.toDtoList(confirmed);
-        List<RequestDto> rejectedDto = mapper.toDtoList(rejected);
+        confirmed.forEach(requestRepository::save);
+        rejected.forEach(requestRepository::save);
 
         return EventRequestStatusUpdateResult.builder()
-                .confirmedRequests(confirmedDto)
-                .rejectedRequests(rejectedDto)
+                .confirmedRequests(mapper.toDtoList(confirmed))
+                .rejectedRequests(mapper.toDtoList(rejected))
                 .build();
     }
 }

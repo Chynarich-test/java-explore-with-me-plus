@@ -35,11 +35,12 @@ public interface RequestRepository extends JpaRepository<Request, Long>, JpaSpec
     }
 
     @Query("""
-        SELECT new ru.yandex.practicum.request.dto.ConfirmedRequestCount(r.event.id, COUNT(r))
-        FROM Request r
-        WHERE r.status = ru.yandex.practicum.request.model.RequestStatus.CONFIRMED
-          AND r.event.id IN :eventIds
-        GROUP BY r.event.id
-        """)
+    SELECT new ru.yandex.practicum.request.dto.ConfirmedRequestCount(e.id, COUNT(r))
+    FROM Request r
+    JOIN r.event e
+    WHERE r.status = ru.yandex.practicum.request.model.RequestStatus.CONFIRMED
+      AND e.id IN :eventIds
+    GROUP BY e.id
+    """)
     List<ConfirmedRequestCount> countConfirmedRequestsForEvents(@Param("eventIds") List<Long> eventIds);
 }
