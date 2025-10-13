@@ -46,8 +46,8 @@ public class PrivateEventController {
     }
 
     @GetMapping("/{eventId}")
-    public EventShortDto findUserEventById(@PathVariable long userId,
-                                           @PathVariable long eventId) {
+    public EventFullDto findUserEventById(@PathVariable long userId,
+                                          @PathVariable long eventId) {
         return eventService.findUserEventById(userId, eventId);
     }
 

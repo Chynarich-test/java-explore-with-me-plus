@@ -23,14 +23,16 @@ public interface EventMapper {
 
     List<EventShortDto> toEventsShortDto(List<Event> events);
 
-  //  @Mapping(target = "category.id", source = "category")
+    //  @Mapping(target = "category.id", source = "category")
     @Mapping(target = "category", source = "category", qualifiedByName = "mapCategoryIdToCategory")
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "location", ignore = true)
     void updateEventFromUserDto(UpdateEventUserRequest dto, @MappingTarget Event entity);
 
-   // @Mapping(target = "category.id", source = "category")
+    // @Mapping(target = "category.id", source = "category")
     @Mapping(target = "category", source = "category", qualifiedByName = "mapCategoryIdToCategory")
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "location", ignore = true)
     void updateEventFromAdminDto(UpdateEventAdminRequest dto, @MappingTarget Event entity);
 
     List<EventFullDto> toEventsFullDto(List<Event> events);
