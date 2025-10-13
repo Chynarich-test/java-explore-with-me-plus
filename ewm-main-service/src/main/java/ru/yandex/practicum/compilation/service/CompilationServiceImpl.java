@@ -16,8 +16,8 @@ import ru.yandex.practicum.compilation.model.Compilation;
 import ru.yandex.practicum.model.Event;
 import ru.yandex.practicum.compilation.repository.CompilationRepository;
 import ru.yandex.practicum.repository.EventRepository;
+import ru.yandex.practicum.common.EntityValidator;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -28,6 +28,7 @@ public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
     private final EventRepository eventRepository;
     private final CompilationMapper compilationMapper;
+    private final EntityValidator entityValidator;
 
     @Override
     @Transactional
@@ -36,17 +37,10 @@ public class CompilationServiceImpl implements CompilationService {
 
         // Проверка уникальности названия
         if (compilationRepository.existsByTitle(compilationDto.getTitle())) {
-            throw new ConflictException("Подборка с названием='" + compilationDto.getTitle() + "' существует");
+            throw new ConflictException("Подборка с названием='" + compilationDto.getTitle() + "' уже существует");
         }
 
-        List<Event> events = new ArrayList<>();
-        if (compilationDto.getEvents() != null && !compilationDto.getEvents().isEmpty()) {
-            events = eventRepository.findAllById(compilationDto.getEvents());
-            // Проверяем, что все события найдены
-            if (events.size() != compilationDto.getEvents().size()) {
-                throw new NotFoundException("Некоторые события не найдены");
-            }
-        }
+        List<Event> events = getEventsByIds(compilationDto.getEvents());
 
         Compilation compilation = compilationMapper.toEntity(compilationDto, events);
         Compilation savedCompilation = compilationRepository.save(compilation);
@@ -60,13 +54,14 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto updateCompilation(Long compId, UpdateCompilationRequest request) {
         log.info("Обновление подборки с id: {}", compId);
 
-        Compilation compilation = compilationRepository.findById(compId)
-                .orElseThrow(() -> new NotFoundException("Подборка с id=" + compId + " не найдена"));
+        Compilation compilation = entityValidator.ensureExists(
+                compilationRepository, compId, "Подборка"
+        );
 
         // Проверка уникальности названия при обновлении
         if (request.getTitle() != null && !request.getTitle().equals(compilation.getTitle())) {
             if (compilationRepository.existsByTitle(request.getTitle())) {
-                throw new ConflictException("Подборка с названием='" + request.getTitle() + "' существует");
+                throw new ConflictException("Подборка с названием='" + request.getTitle() + "' уже существует");
             }
             compilation.setTitle(request.getTitle());
         }
@@ -76,11 +71,7 @@ public class CompilationServiceImpl implements CompilationService {
         }
 
         if (request.getEvents() != null) {
-            List<Event> events = eventRepository.findAllById(request.getEvents());
-            // Проверяем, что все события найдены
-            if (events.size() != request.getEvents().size()) {
-                throw new NotFoundException("Некоторые события не найдены");
-            }
+            List<Event> events = getEventsByIds(request.getEvents());
             compilation.setEvents(events);
         }
 
@@ -95,9 +86,8 @@ public class CompilationServiceImpl implements CompilationService {
     public void deleteCompilation(Long compId) {
         log.info("Удаление подборки с id: {}", compId);
 
-        if (!compilationRepository.existsById(compId)) {
-            throw new NotFoundException("Подборка с id=" + compId + " не найдена");
-        }
+        // Проверяем существование перед удалением
+        entityValidator.ensureExists(compilationRepository, compId, "Подборка");
 
         compilationRepository.deleteById(compId);
         log.info("Подборка удалена с id: {}", compId);
@@ -111,9 +101,7 @@ public class CompilationServiceImpl implements CompilationService {
         Pageable pageable = PageRequest.of(from / size, size);
         var compilationsPage = compilationRepository.findAllByPinned(pinned, pageable);
 
-        return compilationsPage.getContent().stream()
-                .map(compilationMapper::toDto)
-                .toList();
+        return compilationMapper.toDtoList(compilationsPage.getContent());
     }
 
     @Override
@@ -121,9 +109,29 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto getCompilationById(Long compId) {
         log.info("Получение подборки по id: {}", compId);
 
-        Compilation compilation = compilationRepository.findById(compId)
-                .orElseThrow(() -> new NotFoundException("Подборка с id=" + compId + " не найдена"));
+        Compilation compilation = entityValidator.ensureExists(
+                compilationRepository, compId, "Подборка"
+        );
 
         return compilationMapper.toDto(compilation);
+    }
+
+    private List<Event> getEventsByIds(List<Long> eventIds) {
+        if (eventIds == null || eventIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Event> events = eventRepository.findAllById(eventIds);
+
+        // Проверяем, что все события найдены
+        if (events.size() != eventIds.size()) {
+            List<Long> foundIds = events.stream().map(Event::getId).toList();
+            List<Long> missingIds = eventIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .toList();
+            throw new NotFoundException("События с id=" + missingIds + " не найдены");
+        }
+
+        return events;
     }
 }
