@@ -13,9 +13,9 @@ import ru.yandex.practicum.exception.ConflictException;
 import ru.yandex.practicum.exception.NotFoundException;
 import ru.yandex.practicum.compilation.mapper.CompilationMapper;
 import ru.yandex.practicum.compilation.model.Compilation;
-import ru.yandex.practicum.model.Event;
+import ru.yandex.practicum.event.model.Event;
 import ru.yandex.practicum.compilation.repository.CompilationRepository;
-import ru.yandex.practicum.repository.EventRepository;
+import ru.yandex.practicum.event.dao.EventRepository;
 import ru.yandex.practicum.common.EntityValidator;
 
 import java.util.List;

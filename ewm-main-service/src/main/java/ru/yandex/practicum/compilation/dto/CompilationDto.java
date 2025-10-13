@@ -1,6 +1,8 @@
 package ru.yandex.practicum.compilation.dto;
 
 import lombok.*;
+import ru.yandex.practicum.event.dto.EventShortDto;
+
 import java.util.List;
 
 @Data
