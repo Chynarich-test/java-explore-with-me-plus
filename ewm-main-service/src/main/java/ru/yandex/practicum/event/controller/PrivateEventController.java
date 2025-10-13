@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.event.dto.EventFullDto;
@@ -21,7 +21,7 @@ import ru.yandex.practicum.request.service.RequestServiceImpl;
 
 import java.util.List;
 
-@Controller
+@RestController
 @RequestMapping(path = "/users/{userId}/events")
 @Slf4j
 @Validated
@@ -39,8 +39,9 @@ public class PrivateEventController {
     }
 
     @PostMapping
-    public EventShortDto createEvent(@PathVariable long userId,
-                                     @Valid @RequestBody NewEventDto eventDto) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public EventFullDto createEvent(@PathVariable long userId,
+                                    @Valid @RequestBody NewEventDto eventDto) {
         return eventService.createEvent(userId, eventDto);
     }
 

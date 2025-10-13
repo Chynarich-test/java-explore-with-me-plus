@@ -3,7 +3,9 @@ package ru.yandex.practicum.location.dto;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
+@Data
 public class LocationDto {
     @NotNull(message = "Широта (lat) не может быть null")
     @DecimalMin(value = "-90.0", message = "Широта (lat) не может быть меньше -90.0")

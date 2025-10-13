@@ -2,6 +2,8 @@ package ru.yandex.practicum.request.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import ru.yandex.practicum.user.model.User;
 import ru.yandex.practicum.event.model.Event;
 
@@ -29,7 +31,7 @@ public class Request {
     @JoinColumn(name = "requester_id", nullable = false)
     private User requester;
 
-    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private RequestStatus status;
 
     private LocalDateTime created;

@@ -23,8 +23,11 @@ import ru.yandex.practicum.event.model.Event;
 import ru.yandex.practicum.event.model.EventState;
 import ru.yandex.practicum.exception.ExistException;
 import ru.yandex.practicum.exception.NotFoundException;
-import ru.yandex.practicum.user.repository.UserRepository;
+import ru.yandex.practicum.location.dao.LocationRepository;
+import ru.yandex.practicum.location.dto.LocationDto;
+import ru.yandex.practicum.location.model.Location;
 import ru.yandex.practicum.user.model.User;
+import ru.yandex.practicum.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -38,6 +41,7 @@ import java.util.stream.Collectors;
 public class EventService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
+    private final LocationRepository locationRepository;
     private final EventMapper eventMapper;
 
     private final StatsClient statsClient;
@@ -60,7 +64,7 @@ public class EventService {
     }
 
     @Transactional
-    public EventShortDto createEvent(long userId, NewEventDto eventDto) {
+    public EventFullDto createEvent(long userId, NewEventDto eventDto) {
         User owner = entityValidator.ensureExists(userRepository, userId, "User");
 
         if (eventDto.getEventDate() != null) {
@@ -70,11 +74,34 @@ public class EventService {
             }
         }
 
+        Location location = getOrCreateLocation(eventDto.getLocation());
+
+
         Event event = eventMapper.fromNewEventDto(eventDto);
         event.setInitiator(owner);
+        event.setLocation(location);
+
+        event.setState(EventState.PENDING);
 
         Event savedItem = eventRepository.save(event);
-        return eventMapper.toEventShortDto(savedItem);
+
+        System.out.println(savedItem);
+        System.out.println(eventMapper.toEventFullDto(savedItem));
+
+        return eventMapper.toEventFullDto(savedItem);
+    }
+
+    private Location getOrCreateLocation(LocationDto locationDto) {
+        float lat = locationDto.getLat();
+        float lon = locationDto.getLon();
+
+        return locationRepository.findByLatAndLon(lat, lon)
+                .orElseGet(() -> {
+                    Location newLocation = new Location();
+                    newLocation.setLat(lat);
+                    newLocation.setLon(lon);
+                    return locationRepository.save(newLocation);
+                });
     }
 
     public EventShortDto findUserEventById(long userId, long eventId) {
