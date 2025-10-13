@@ -10,4 +10,3 @@ CREATE TABLE IF NOT EXISTS hits (
 CREATE INDEX IF NOT EXISTS idx_hit_timestamp ON hits(timestamp);
 CREATE INDEX IF NOT EXISTS idx_hit_uri ON hits(uri);
 CREATE INDEX IF NOT EXISTS idx_hit_app ON hits(app);
-// исправления
