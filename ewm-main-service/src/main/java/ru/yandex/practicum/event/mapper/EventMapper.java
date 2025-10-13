@@ -17,18 +17,31 @@ public interface EventMapper {
 
     EventShortDto toEventShortDto(Event event);
 
-    @Mapping(source = "category", target = "category.id")
+    //  @Mapping(source = "category", target = "category.id")
+    @Mapping(target = "category", source = "category", qualifiedByName = "mapCategoryIdToCategory")
     Event fromNewEventDto(NewEventDto dto);
 
     List<EventShortDto> toEventsShortDto(List<Event> events);
 
-    @Mapping(target = "category.id", source = "category")
+    //  @Mapping(target = "category.id", source = "category")
+    @Mapping(target = "category", source = "category", qualifiedByName = "mapCategoryIdToCategory")
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "location", ignore = true)
     void updateEventFromUserDto(UpdateEventUserRequest dto, @MappingTarget Event entity);
 
-    @Mapping(target = "category.id", source = "category")
+    // @Mapping(target = "category.id", source = "category")
+    @Mapping(target = "category", source = "category", qualifiedByName = "mapCategoryIdToCategory")
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "location", ignore = true)
     void updateEventFromAdminDto(UpdateEventAdminRequest dto, @MappingTarget Event entity);
 
     List<EventFullDto> toEventsFullDto(List<Event> events);
+
+    @Named("mapCategoryIdToCategory")
+    default ru.yandex.practicum.category.model.Category mapCategoryIdToCategory(Long id) {
+        if (id == null) return null;
+        ru.yandex.practicum.category.model.Category category = new ru.yandex.practicum.category.model.Category();
+        category.setId(id);
+        return category;
+    }
 }

@@ -32,17 +32,4 @@ public class RequestController {
                                     @PathVariable Long requestId) {
         return service.cancelRequest(userId, requestId);
     }
-
-    @GetMapping("/events/{eventId}/requests")
-    public List<RequestDto> getEventRequests(@PathVariable Long userId,
-                                             @PathVariable Long eventId) {
-        return service.getEventRequests(userId, eventId);
-    }
-
-    @PatchMapping("/events/{eventId}/requests")
-    public EventRequestStatusUpdateResult updateStatuses(@PathVariable Long userId,
-                                                         @PathVariable Long eventId,
-                                                         @RequestBody EventRequestStatusUpdateRequest request) {
-        return service.changeRequestStatus(userId, eventId, request);
-    }
 }

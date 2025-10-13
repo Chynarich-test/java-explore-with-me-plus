@@ -15,5 +15,5 @@ public interface EventRepository extends JpaRepository<Event, Long>, EventReposi
 
     Optional<Event> findByIdAndState(Long id, EventState eventState);
 
-    Optional<Event> countByCategoryId(Long categoryId);
+    long countByCategoryId(Long categoryId);
 }

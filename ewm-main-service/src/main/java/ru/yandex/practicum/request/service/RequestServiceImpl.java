@@ -5,7 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.common.EntityValidator;
 import ru.yandex.practicum.event.model.Event;
-import ru.yandex.practicum.event.repository.EventRepository;
+import ru.yandex.practicum.event.model.EventState;
+import ru.yandex.practicum.event.dao.EventRepository;
 import ru.yandex.practicum.exception.NotFoundException;
 import ru.yandex.practicum.exception.ValidationException;
 import ru.yandex.practicum.request.dto.*;
@@ -38,7 +39,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public RequestDto createRequest(Long userId, Long eventId) {
-        User user = entityValidator.ensureExists(userRepository, id, "Пользователь");
+        User user = entityValidator.ensureExists(userRepository, userId, "Пользователь");
         Event event = entityValidator.ensureExists(eventRepository, eventId, "Событие");
 
         if (Objects.equals(event.getInitiator().getId(), userId)) {
@@ -56,7 +57,7 @@ public class RequestServiceImpl implements RequestService {
         }
 
         RequestStatus initialStatus = RequestStatus.PENDING;
-        if (Boolean.FALSE.equals(event.getRequestModeration())) {
+        if (!event.isRequestModeration()) {
             initialStatus = RequestStatus.CONFIRMED;
         }
 

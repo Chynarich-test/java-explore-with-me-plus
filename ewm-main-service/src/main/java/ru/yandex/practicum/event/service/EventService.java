@@ -5,9 +5,9 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.client.StatsClient;
+import ru.yandex.practicum.common.EntityValidator;
 import ru.yandex.practicum.dto.EndpointHitDto;
 import ru.yandex.practicum.dto.ViewStatsDto;
 import ru.yandex.practicum.event.dao.EventRepository;
@@ -23,8 +23,14 @@ import ru.yandex.practicum.event.model.Event;
 import ru.yandex.practicum.event.model.EventState;
 import ru.yandex.practicum.exception.ExistException;
 import ru.yandex.practicum.exception.NotFoundException;
-import ru.yandex.practicum.user.dao.UserRepository;
+import ru.yandex.practicum.exception.ValidationException;
+import ru.yandex.practicum.location.dao.LocationRepository;
+import ru.yandex.practicum.location.dto.LocationDto;
+import ru.yandex.practicum.location.model.Location;
+import ru.yandex.practicum.request.dto.ConfirmedRequestCount;
+import ru.yandex.practicum.request.repository.RequestRepository;
 import ru.yandex.practicum.user.model.User;
+import ru.yandex.practicum.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -38,10 +44,13 @@ import java.util.stream.Collectors;
 public class EventService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
+    private final LocationRepository locationRepository;
     private final EventMapper eventMapper;
+    private final RequestRepository requestRepository;
 
     private final StatsClient statsClient;
     private final HttpServletRequest request;
+    private final EntityValidator entityValidator;
 
     public List<EventShortDto> findEvents(UserEventsQuery query) {
         List<EventShortDto> dtos = eventMapper.toEventsShortDto(eventRepository.findByInitiatorId(query.userId(),
@@ -59,25 +68,45 @@ public class EventService {
     }
 
     @Transactional
-    public EventShortDto createEvent(long userId, NewEventDto eventDto) {
-        User owner = findById(userRepository, userId, "User");
+    public EventFullDto createEvent(long userId, NewEventDto eventDto) {
+        User owner = entityValidator.ensureExists(userRepository, userId, "User");
 
         if (eventDto.getEventDate() != null) {
             LocalDateTime now = LocalDateTime.now();
             if (eventDto.getEventDate().isBefore(now.plusHours(2))) {
-                throw new ExistException("Event date must be at least 2 hours in the future");
+                throw new ValidationException("Event date must be at least 2 hours in the future");
             }
         }
 
+        Location location = getOrCreateLocation(eventDto.getLocation());
+
+
         Event event = eventMapper.fromNewEventDto(eventDto);
         event.setInitiator(owner);
+        event.setLocation(location);
+
+        event.setState(EventState.PENDING);
 
         Event savedItem = eventRepository.save(event);
-        return eventMapper.toEventShortDto(savedItem);
+
+        return eventMapper.toEventFullDto(savedItem);
     }
 
-    public EventShortDto findUserEventById(long userId, long eventId) {
-        EventShortDto dto = eventMapper.toEventShortDto(findByIdAndUser(userId, eventId));
+    private Location getOrCreateLocation(LocationDto locationDto) {
+        float lat = locationDto.getLat();
+        float lon = locationDto.getLon();
+
+        return locationRepository.findByLatAndLon(lat, lon)
+                .orElseGet(() -> {
+                    Location newLocation = new Location();
+                    newLocation.setLat(lat);
+                    newLocation.setLon(lon);
+                    return locationRepository.save(newLocation);
+                });
+    }
+
+    public EventFullDto findUserEventById(long userId, long eventId) {
+        EventFullDto dto = eventMapper.toEventFullDto(findByIdAndUser(eventId, userId));
         if (dto != null) {
             var uri = "/events/" + dto.getId();
             var hits = fetchHitsForUris(List.of(uri));
@@ -86,24 +115,19 @@ public class EventService {
         return dto;
     }
 
-    private <T, E extends JpaRepository<T, Long>> T findById(E repo, long id, String startWord) {
-        return repo.findById(id).orElseThrow(() ->
-                new NotFoundException(startWord + " with id=" + id + " was not found"));
-    }
-
     private Event findByPublicId(long eventId) {
         return eventRepository.findByIdAndState(eventId, EventState.PUBLISHED).orElseThrow(() ->
                 new NotFoundException("Event with id=" + eventId + " was not found"));
     }
 
-    private Event findByIdAndUser(long userId, long eventId) {
-        return eventRepository.findByIdAndInitiatorId(userId, eventId).orElseThrow(() ->
+    private Event findByIdAndUser(long eventId, long userId) {
+        return eventRepository.findByIdAndInitiatorId(eventId, userId).orElseThrow(() ->
                 new NotFoundException("Владелец с ID " + userId + " или ивент с ID " + eventId + " не найдены"));
     }
 
     @Transactional
     public EventFullDto updateUserEvent(Long userId, Long eventId, UpdateEventUserRequest updateRequest) {
-        Event event = findByIdAndUser(userId, eventId);
+        Event event = findByIdAndUser(eventId, userId);
         if (event.getState().equals(EventState.PUBLISHED)) {
             throw new ExistException("Only pending or canceled events can be changed");
         }
@@ -111,7 +135,7 @@ public class EventService {
         if (updateRequest.getEventDate() != null) {
             LocalDateTime now = LocalDateTime.now();
             if (updateRequest.getEventDate().isBefore(now.plusHours(2))) {
-                throw new ExistException("Event date must be at least 2 hours in the future");
+                throw new ValidationException("Event date must be at least 2 hours in the future");
             }
         }
 
@@ -131,6 +155,12 @@ public class EventService {
     }
 
     public List<EventShortDto> searchPublicEvents(PublicEventFilter filter) {
+        if (filter.getRangeStart() != null && filter.getRangeEnd() != null) {
+            if (filter.getRangeStart().isAfter(filter.getRangeEnd())) {
+                throw new ValidationException("Дата начала не может быть позже даты окончания.");
+            }
+        }
+
         List<EventShortDto> dtos = eventMapper.toEventsShortDto(eventRepository.searchEventsByPublic(filter));
 
         if (dtos != null && !dtos.isEmpty()) {
@@ -152,18 +182,22 @@ public class EventService {
 
     public EventFullDto findPublicEventById(long id) {
         Event event = findByPublicId(id);
-        saveHit();
+
         EventFullDto dto = eventMapper.toEventFullDto(event);
         if (dto != null) {
             var uri = "/events/" + dto.getId();
             var hits = fetchHitsForUris(List.of(uri));
             dto.setViews(hits.getOrDefault(uri, 0L));
         }
+        saveHit();
         return dto;
     }
 
     public List<EventFullDto> searchEventsByAdmin(AdminEventFilter filter) {
         List<EventFullDto> dtos = eventMapper.toEventsFullDto(eventRepository.searchEventsByAdmin(filter));
+
+        setConfirmedRequestsForEvents(dtos);
+
         if (dtos != null && !dtos.isEmpty()) {
             var uris = dtos.stream().map(d -> "/events/" + d.getId()).collect(Collectors.toList());
             var hits = fetchHitsForUris(uris);
@@ -171,12 +205,27 @@ public class EventService {
                 dto.setViews(hits.getOrDefault("/events/" + dto.getId(), 0L));
             }
         }
+
+
         return dtos;
+    }
+
+    private void setConfirmedRequestsForEvents(List<EventFullDto> dtos) {
+        List<Long> eventIds = dtos.stream()
+                .map(EventFullDto::getId)
+                .toList();
+
+        List<ConfirmedRequestCount> requestCounts = requestRepository.countConfirmedRequestsForEvents(eventIds);
+
+        Map<Long, Long> confirmedRequestsMap = requestCounts.stream()
+                .collect(Collectors.toMap(ConfirmedRequestCount::getEventId, ConfirmedRequestCount::getCount));
+
+        dtos.forEach(dto -> dto.setConfirmedRequests(confirmedRequestsMap.getOrDefault(dto.getId(), 0L)));
     }
 
     @Transactional
     public EventFullDto moderateEvent(Long eventId, UpdateEventAdminRequest adminRequest) {
-        Event event = findById(eventRepository, eventId, "Event");
+        Event event = entityValidator.ensureExists(eventRepository, eventId, "Event");
 
         if (adminRequest.getEventDate() != null) {
             LocalDateTime now = LocalDateTime.now();
@@ -196,6 +245,11 @@ public class EventService {
             } else {
                 throw new ExistException("Cannot publish the event because it's not in the right state: PUBLISHED");
             }
+        }
+
+        if (adminRequest.getLocation() != null) {
+            Location location = getOrCreateLocation(adminRequest.getLocation());
+            event.setLocation(location);
         }
 
         return eventMapper.toEventFullDto(eventRepository.save(event));
@@ -219,7 +273,7 @@ public class EventService {
         try {
             LocalDateTime start = LocalDateTime.now().minusYears(10);
             LocalDateTime end = LocalDateTime.now().plusDays(1);
-            var stats = statsClient.getStats(start, end, uris, false);
+            var stats = statsClient.getStats(start, end, uris, true);
             if (stats == null || stats.isEmpty()) return Map.of();
             return stats.stream().collect(Collectors.toMap(
                     ViewStatsDto::getUri, v -> v.getHits() == null ? 0L : v.getHits()));

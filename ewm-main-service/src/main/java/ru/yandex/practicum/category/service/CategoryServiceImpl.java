@@ -10,7 +10,7 @@ import ru.yandex.practicum.category.mapper.CategoryMapper;
 import ru.yandex.practicum.category.model.Category;
 import ru.yandex.practicum.category.repository.CategoryRepository;
 import ru.yandex.practicum.common.EntityValidator;
-import ru.yandex.practicum.event.repository.EventRepository;
+import ru.yandex.practicum.event.dao.EventRepository;
 import ru.yandex.practicum.exception.ValidationException;
 
 import java.util.List;

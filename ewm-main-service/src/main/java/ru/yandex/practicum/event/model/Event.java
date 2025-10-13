@@ -2,7 +2,9 @@ package ru.yandex.practicum.event.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.yandex.practicum.category.model.EventCategory;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import ru.yandex.practicum.category.model.Category;
 import ru.yandex.practicum.location.model.Location;
 import ru.yandex.practicum.request.model.Request;
 import ru.yandex.practicum.user.model.User;
@@ -28,7 +30,7 @@ public class Event {
     private String description;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
-    private EventCategory category;
+    private Category category;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "initiator_id", nullable = false)
     private User initiator;
@@ -46,11 +48,11 @@ public class Event {
     @Column(name = "paid")
     private boolean paid;
     @Column(name = "participant_limit")
-    private int participantLimit;
+    private Integer participantLimit;
     @Column(name = "request_moderation")
     private boolean requestModeration;
     @Column(name = "state", nullable = false)
-    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private EventState state;
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
     private List<Request> requests;
