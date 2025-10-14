@@ -22,12 +22,14 @@ import ru.yandex.practicum.event.mapper.EventMapper;
 import ru.yandex.practicum.event.model.Event;
 import ru.yandex.practicum.event.model.EventState;
 import ru.yandex.practicum.exception.ExistException;
+import ru.yandex.practicum.exception.InvalidDateRangeException;
 import ru.yandex.practicum.exception.NotFoundException;
 import ru.yandex.practicum.exception.ValidationException;
 import ru.yandex.practicum.location.dao.LocationRepository;
 import ru.yandex.practicum.location.dto.LocationDto;
 import ru.yandex.practicum.location.model.Location;
 import ru.yandex.practicum.request.dto.ConfirmedRequestCount;
+import ru.yandex.practicum.request.model.RequestStatus;
 import ru.yandex.practicum.request.repository.RequestRepository;
 import ru.yandex.practicum.user.model.User;
 import ru.yandex.practicum.user.repository.UserRepository;
@@ -157,7 +159,7 @@ public class EventService {
     public List<EventShortDto> searchPublicEvents(PublicEventFilter filter) {
         if (filter.getRangeStart() != null && filter.getRangeEnd() != null) {
             if (filter.getRangeStart().isAfter(filter.getRangeEnd())) {
-                throw new ValidationException("Дата начала не может быть позже даты окончания.");
+                throw new InvalidDateRangeException("Дата начала не может быть позже даты окончания.");
             }
         }
 
@@ -215,7 +217,7 @@ public class EventService {
                 .map(EventFullDto::getId)
                 .toList();
 
-        List<ConfirmedRequestCount> requestCounts = requestRepository.countConfirmedRequestsForEvents(eventIds);
+        List<ConfirmedRequestCount> requestCounts = requestRepository.countConfirmedRequestsForEvents(eventIds, RequestStatus.CONFIRMED);
 
         Map<Long, Long> confirmedRequestsMap = requestCounts.stream()
                 .collect(Collectors.toMap(ConfirmedRequestCount::getEventId, ConfirmedRequestCount::getCount));

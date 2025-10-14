@@ -51,6 +51,17 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleExist(final ConflictException e) {
+        return new ApiError(
+                "Integrity constraint has been violated.",
+                e.getMessage(),
+                "CONFLICT",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleBadRequest(final MethodArgumentNotValidException e) {
         FieldError fieldError = e.getBindingResult().getFieldError();
@@ -62,6 +73,17 @@ public class ErrorHandler {
         return new ApiError(
                 "Incorrectly made request.",
                 message,
+                "BAD_REQUEST",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleInvalidDateRange(final InvalidDateRangeException e) {
+        return new ApiError(
+                "Incorrectly made request.",
+                e.getMessage(),
                 "BAD_REQUEST",
                 LocalDateTime.now()
         );

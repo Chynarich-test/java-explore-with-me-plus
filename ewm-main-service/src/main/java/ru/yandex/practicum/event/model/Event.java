@@ -2,6 +2,8 @@ package ru.yandex.practicum.event.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import ru.yandex.practicum.category.model.Category;
 import ru.yandex.practicum.location.model.Location;
 import ru.yandex.practicum.request.model.Request;
@@ -50,7 +52,7 @@ public class Event {
     @Column(name = "request_moderation")
     private boolean requestModeration;
     @Column(name = "state", nullable = false)
-    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private EventState state;
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
     private List<Request> requests;

@@ -2,6 +2,7 @@ package ru.yandex.practicum.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.common.EntityValidator;
@@ -45,7 +46,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getUsers(List<Long> ids, PageParams pageParams) {
-        PageRequest pageable = PageRequest.of(pageParams.getPageNumber(), Math.max(1, pageParams.getSize()));
+    PageRequest pageable = PageRequest.of(pageParams.getPageNumber(), Math.max(1, pageParams.getSize()), Sort.by("id").ascending());
         List<User> users;
         if (ids != null && !ids.isEmpty()) {
             users = userRepository.findAllByIdIn(ids, pageable);
