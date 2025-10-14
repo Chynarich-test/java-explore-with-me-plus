@@ -32,7 +32,6 @@ public class UserServiceImpl implements UserService {
         ensureEmailUnique(request.getEmail(), null);
 
         User user = userMapper.toEntity(request);
-        setDefaultNameIfEmpty(user);
 
         User saved = userRepository.save(user);
         return userMapper.toDto(saved);
@@ -75,7 +74,6 @@ public class UserServiceImpl implements UserService {
         }
 
         userMapper.updateEntityFromDto(userDto, user);
-        setDefaultNameIfEmpty(user);
 
         User saved = userRepository.save(user);
         return userMapper.toDto(saved);
@@ -96,15 +94,5 @@ public class UserServiceImpl implements UserService {
                 throw new ValidationException("Email должен быть уникальным!");
             }
         });
-    }
-
-    private void setDefaultNameIfEmpty(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            String email = user.getEmail();
-            String defaultName = email;
-            int at = email.indexOf("@");
-            if (at > 0) defaultName = email.substring(0, at);
-            user.setName(defaultName);
-        }
     }
 }
