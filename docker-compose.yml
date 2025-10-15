@@ -1,21 +1,4 @@
 services:
-  stats-db:
-    image: postgres:16.1
-    container_name: stats-db
-    environment:
-      - POSTGRES_DB=statsdb
-      - POSTGRES_USER=dbuser
-      - POSTGRES_PASSWORD=12345
-    volumes:
-      - ./volumes/stats-db:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -q -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   stats-server:
     build:
       context: ./stats-service/stats-server
@@ -31,23 +14,11 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/statsdb
       - SPRING_DATASOURCE_USERNAME=dbuser
       - SPRING_DATASOURCE_PASSWORD=12345
-
-  ewm-db:
-    image: postgres:16.1
-    container_name: ewm-db
-    environment:
-      - POSTGRES_DB=ewmdb
-      - POSTGRES_USER=dbuser
-      - POSTGRES_PASSWORD=12345
-    volumes:
-      - ./volumes/ewm-db:/var/lib/postgresql/data
-    ports:
-      - "5434:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -q -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "cat < /dev/tcp/localhost/9090 >/dev/null 2>&1 || exit 1"]
       interval: 5s
-      timeout: 5s
-      retries: 10
+      timeout: 3s
+      retries: 20
 
   ewm-service:
     build:
@@ -59,7 +30,7 @@ services:
       - "8080:8080"
     depends_on:
       stats-server:
-        condition: service_started
+        condition: service_healthy
       ewm-db:
         condition: service_healthy
     environment:
