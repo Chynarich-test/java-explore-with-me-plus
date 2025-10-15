@@ -174,11 +174,11 @@ public class EventService {
             }
         }
 
+        saveHit();
+
         if (filter.getSort() != null && filter.getSort() == EventSort.VIEWS) {
             dtos.sort(Comparator.comparing(EventShortDto::getViews).reversed());
         }
-
-        saveHit();
 
         return dtos;
     }
@@ -188,11 +188,12 @@ public class EventService {
 
         EventFullDto dto = eventMapper.toEventFullDto(event);
         if (dto != null) {
+            saveHit();
             var uri = "/events/" + dto.getId();
             var hits = fetchHitsForUris(List.of(uri));
             dto.setViews(hits.getOrDefault(uri, 0L));
         }
-        saveHit();
+
         return dto;
     }
 
@@ -260,16 +261,29 @@ public class EventService {
 
     private void saveHit() {
         try {
+            String ip = extractClientIp();
             EndpointHitDto hitDto = EndpointHitDto.builder()
                     .app("ewm-main-service")
                     .uri(request.getRequestURI())
-                    .ip(request.getRemoteAddr())
+                    .ip(ip)
                     .timestamp(LocalDateTime.now())
                     .build();
             statsClient.saveHit(hitDto);
         } catch (Exception e) {
             log.error("Не удалось отправить информацию о просмотре в сервис статистики: {}", e.getMessage());
         }
+    }
+
+    private String extractClientIp() {
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) {
+            return xff.split(",")[0].trim();
+        }
+        String xReal = request.getHeader("X-Real-IP");
+        if (xReal != null && !xReal.isBlank()) {
+            return xReal.trim();
+        }
+        return request.getRemoteAddr();
     }
 
     private Map<String, Long> fetchHitsForUris(List<String> uris) {
