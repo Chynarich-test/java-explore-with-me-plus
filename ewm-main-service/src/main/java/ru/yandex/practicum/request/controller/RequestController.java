@@ -2,6 +2,7 @@ package ru.yandex.practicum.request.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.request.dto.*;
 import ru.yandex.practicum.request.service.RequestServiceImpl;
@@ -28,8 +29,7 @@ public class RequestController {
     }
 
     @PatchMapping("/requests/{requestId}/cancel")
-    public RequestDto cancelRequest(@PathVariable Long userId,
-                                    @PathVariable Long requestId) {
-        return service.cancelRequest(userId, requestId);
+    public ResponseEntity<RequestDto> cancelRequest(@PathVariable Long userId, @PathVariable Long requestId) {
+        return ResponseEntity.ok(service.cancelRequest(userId, requestId));
     }
 }

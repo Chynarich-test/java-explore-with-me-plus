@@ -29,17 +29,24 @@ public interface RequestRepository extends JpaRepository<Request, Long>, JpaSpec
                 .and(RequestSpecs.byStatus(RequestStatus.CONFIRMED)));
     }
 
-    default List<Request> findAllByEventIdAndIds(Long eventId, List<Long> ids) {
-        return findAll(RequestSpecs.fetchRequesterAndEvent()
-                .and(RequestSpecs.byEventAndIds(eventId, ids)));
-    }
+    @Query("""
+            SELECT r FROM Request r
+            JOIN FETCH r.requester
+            JOIN FETCH r.event
+            WHERE r.event.id = :eventId AND r.id IN :requestIds
+            """)
+    List<Request> findByEventIdAndIdInWithRelations(@Param("eventId") Long eventId, @Param("requestIds") List<Long> requestIds);
 
     @Query("""
-        SELECT new ru.yandex.practicum.request.dto.ConfirmedRequestCount(r.event.id, COUNT(r))
-        FROM Request r
-        WHERE r.status = ru.yandex.practicum.request.model.RequestStatus.CONFIRMED
-          AND r.event.id IN :eventIds
-        GROUP BY r.event.id
-        """)
-    List<ConfirmedRequestCount> countConfirmedRequestsForEvents(@Param("eventIds") List<Long> eventIds);
+            SELECT new ru.yandex.practicum.request.dto.ConfirmedRequestCount(e.id, COUNT(r))
+            FROM Request r
+            JOIN r.event e
+            WHERE r.status = :status
+                AND e.id IN :eventIds
+            GROUP BY e.id
+            """)
+    List<ConfirmedRequestCount> countConfirmedRequestsForEvents(@Param("eventIds") List<Long> eventIds,
+                                                                @Param("status") RequestStatus status);
+
+    boolean existsByEventIdAndRequesterId(Long eventId, Long requesterId);
 }

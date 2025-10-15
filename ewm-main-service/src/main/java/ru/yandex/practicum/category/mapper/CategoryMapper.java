@@ -17,6 +17,7 @@ public interface CategoryMapper {
 
     List<CategoryDto> toDtoList(List<Category> categories);
 
+    @org.mapstruct.Mapping(target = "id", ignore = true)
     void updateFromDto(CategoryDto dto, @MappingTarget Category entity);
 
 }

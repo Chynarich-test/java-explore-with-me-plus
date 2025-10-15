@@ -22,12 +22,14 @@ import ru.yandex.practicum.event.mapper.EventMapper;
 import ru.yandex.practicum.event.model.Event;
 import ru.yandex.practicum.event.model.EventState;
 import ru.yandex.practicum.exception.ExistException;
+import ru.yandex.practicum.exception.InvalidDateRangeException;
 import ru.yandex.practicum.exception.NotFoundException;
 import ru.yandex.practicum.exception.ValidationException;
 import ru.yandex.practicum.location.dao.LocationRepository;
 import ru.yandex.practicum.location.dto.LocationDto;
 import ru.yandex.practicum.location.model.Location;
 import ru.yandex.practicum.request.dto.ConfirmedRequestCount;
+import ru.yandex.practicum.request.model.RequestStatus;
 import ru.yandex.practicum.request.repository.RequestRepository;
 import ru.yandex.practicum.user.model.User;
 import ru.yandex.practicum.user.repository.UserRepository;
@@ -58,6 +60,7 @@ public class EventService {
 
         if (dtos != null && !dtos.isEmpty()) {
             var uris = dtos.stream().map(d -> "/events/" + d.getId()).collect(Collectors.toList());
+            saveHit();
             var hits = fetchHitsForUris(uris);
             for (EventShortDto dto : dtos) {
                 dto.setViews(hits.getOrDefault("/events/" + dto.getId(), 0L));
@@ -157,7 +160,7 @@ public class EventService {
     public List<EventShortDto> searchPublicEvents(PublicEventFilter filter) {
         if (filter.getRangeStart() != null && filter.getRangeEnd() != null) {
             if (filter.getRangeStart().isAfter(filter.getRangeEnd())) {
-                throw new ValidationException("Дата начала не может быть позже даты окончания.");
+                throw new InvalidDateRangeException("Дата начала не может быть позже даты окончания.");
             }
         }
 
@@ -171,11 +174,11 @@ public class EventService {
             }
         }
 
+        saveHit();
+
         if (filter.getSort() != null && filter.getSort() == EventSort.VIEWS) {
             dtos.sort(Comparator.comparing(EventShortDto::getViews).reversed());
         }
-
-        saveHit();
 
         return dtos;
     }
@@ -185,11 +188,12 @@ public class EventService {
 
         EventFullDto dto = eventMapper.toEventFullDto(event);
         if (dto != null) {
+            saveHit();
             var uri = "/events/" + dto.getId();
             var hits = fetchHitsForUris(List.of(uri));
             dto.setViews(hits.getOrDefault(uri, 0L));
         }
-        saveHit();
+
         return dto;
     }
 
@@ -215,7 +219,7 @@ public class EventService {
                 .map(EventFullDto::getId)
                 .toList();
 
-        List<ConfirmedRequestCount> requestCounts = requestRepository.countConfirmedRequestsForEvents(eventIds);
+        List<ConfirmedRequestCount> requestCounts = requestRepository.countConfirmedRequestsForEvents(eventIds, RequestStatus.CONFIRMED);
 
         Map<Long, Long> confirmedRequestsMap = requestCounts.stream()
                 .collect(Collectors.toMap(ConfirmedRequestCount::getEventId, ConfirmedRequestCount::getCount));
@@ -257,16 +261,29 @@ public class EventService {
 
     private void saveHit() {
         try {
+            String ip = extractClientIp();
             EndpointHitDto hitDto = EndpointHitDto.builder()
                     .app("ewm-main-service")
                     .uri(request.getRequestURI())
-                    .ip(request.getRemoteAddr())
+                    .ip(ip)
                     .timestamp(LocalDateTime.now())
                     .build();
             statsClient.saveHit(hitDto);
         } catch (Exception e) {
             log.error("Не удалось отправить информацию о просмотре в сервис статистики: {}", e.getMessage());
         }
+    }
+
+    private String extractClientIp() {
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) {
+            return xff.split(",")[0].trim();
+        }
+        String xReal = request.getHeader("X-Real-IP");
+        if (xReal != null && !xReal.isBlank()) {
+            return xReal.trim();
+        }
+        return request.getRemoteAddr();
     }
 
     private Map<String, Long> fetchHitsForUris(List<String> uris) {

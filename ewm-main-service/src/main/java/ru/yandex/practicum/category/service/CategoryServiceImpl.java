@@ -60,6 +60,7 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         mapper.updateFromDto(categoryDto, existing);
+        existing.setId(catId);
         Category saved = categoryRepository.save(existing);
         return mapper.toDto(saved);
     }

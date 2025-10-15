@@ -1,6 +1,6 @@
 -- Типы ENUM
 CREATE TYPE event_state AS ENUM ('PENDING', 'PUBLISHED', 'CANCELED');
-CREATE TYPE request_status AS ENUM ('PENDING', 'CONFIRMED', 'REJECTED');
+CREATE TYPE request_status AS ENUM ('PENDING', 'CONFIRMED', 'REJECTED', 'CANCELED');
 
 -- Таблица users
 CREATE TABLE IF NOT EXISTS users (

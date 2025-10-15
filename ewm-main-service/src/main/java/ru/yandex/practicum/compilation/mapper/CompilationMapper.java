@@ -5,7 +5,7 @@ import ru.yandex.practicum.compilation.dto.CompilationDto;
 import ru.yandex.practicum.compilation.dto.NewCompilationDto;
 import ru.yandex.practicum.compilation.model.Compilation;
 import ru.yandex.practicum.event.mapper.EventMapper;
-import ru.yandex.practicum.model.Event;
+import ru.yandex.practicum.event.model.Event;
 
 import java.util.Collections;
 import java.util.List;

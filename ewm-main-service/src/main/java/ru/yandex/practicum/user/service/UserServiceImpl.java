@@ -2,6 +2,7 @@ package ru.yandex.practicum.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.common.EntityValidator;
@@ -32,7 +33,6 @@ public class UserServiceImpl implements UserService {
         ensureEmailUnique(request.getEmail(), null);
 
         User user = userMapper.toEntity(request);
-        setDefaultNameIfEmpty(user);
 
         User saved = userRepository.save(user);
         return userMapper.toDto(saved);
@@ -46,7 +46,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getUsers(List<Long> ids, PageParams pageParams) {
-        PageRequest pageable = PageRequest.of(pageParams.getPageNumber(), Math.max(1, pageParams.getSize()));
+    PageRequest pageable = PageRequest.of(pageParams.getPageNumber(), Math.max(1, pageParams.getSize()), Sort.by("id").ascending());
         List<User> users;
         if (ids != null && !ids.isEmpty()) {
             users = userRepository.findAllByIdIn(ids, pageable);
@@ -75,7 +75,6 @@ public class UserServiceImpl implements UserService {
         }
 
         userMapper.updateEntityFromDto(userDto, user);
-        setDefaultNameIfEmpty(user);
 
         User saved = userRepository.save(user);
         return userMapper.toDto(saved);
@@ -96,15 +95,5 @@ public class UserServiceImpl implements UserService {
                 throw new ValidationException("Email должен быть уникальным!");
             }
         });
-    }
-
-    private void setDefaultNameIfEmpty(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            String email = user.getEmail();
-            String defaultName = email;
-            int at = email.indexOf("@");
-            if (at > 0) defaultName = email.substring(0, at);
-            user.setName(defaultName);
-        }
     }
 }

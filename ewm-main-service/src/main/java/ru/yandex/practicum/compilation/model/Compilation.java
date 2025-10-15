@@ -3,6 +3,8 @@ package ru.yandex.practicum.compilation.model;
 import lombok.*;
 
 import jakarta.persistence.*;
+import ru.yandex.practicum.event.model.Event;
+
 import java.util.ArrayList;
 import java.util.List;
 
