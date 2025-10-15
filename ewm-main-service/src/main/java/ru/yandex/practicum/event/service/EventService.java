@@ -60,6 +60,7 @@ public class EventService {
 
         if (dtos != null && !dtos.isEmpty()) {
             var uris = dtos.stream().map(d -> "/events/" + d.getId()).collect(Collectors.toList());
+            saveHit();
             var hits = fetchHitsForUris(uris);
             for (EventShortDto dto : dtos) {
                 dto.setViews(hits.getOrDefault("/events/" + dto.getId(), 0L));
@@ -187,11 +188,11 @@ public class EventService {
 
         EventFullDto dto = eventMapper.toEventFullDto(event);
         if (dto != null) {
+            saveHit();
             var uri = "/events/" + dto.getId();
             var hits = fetchHitsForUris(List.of(uri));
             dto.setViews(hits.getOrDefault(uri, 0L));
         }
-        saveHit();
         return dto;
     }
 
