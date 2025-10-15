@@ -186,18 +186,13 @@ public class EventService {
     public EventFullDto findPublicEventById(long id) {
         Event event = findByPublicId(id);
 
-        saveHit();
-
         EventFullDto dto = eventMapper.toEventFullDto(event);
-
-        var uri = "/events/" + dto.getId();
-        var hitsMap = fetchHitsForUris(List.of(uri));
-        long previousViews = hitsMap.getOrDefault(uri, 0L);
-
+        if (dto != null) {
+            var uri = "/events/" + dto.getId();
+            var hits = fetchHitsForUris(List.of(uri));
+            dto.setViews(hits.getOrDefault(uri, 0L));
+        }
         saveHit();
-
-        dto.setViews(previousViews + 1);
-
         return dto;
     }
 
