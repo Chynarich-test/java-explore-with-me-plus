@@ -3,7 +3,7 @@ package ru.yandex.practicum.event.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.Data;
-import ru.yandex.practicum.location.dto.LocationDto;
+import ru.yandex.practicum.event.model.Location;
 
 import java.time.LocalDateTime;
 
@@ -22,7 +22,7 @@ public class NewEventDto {
     @Future(message = "Дата события должна быть в будущем")
     private LocalDateTime eventDate;
     @NotNull(message = "Местоположение обязательно")
-    private LocationDto location;
+    private Location location;
     private Boolean paid;
     @PositiveOrZero(message = "Лимит участников не может быть отрицательным")
     private int participantLimit;

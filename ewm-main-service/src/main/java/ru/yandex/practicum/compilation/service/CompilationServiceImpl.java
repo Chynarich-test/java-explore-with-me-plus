@@ -2,21 +2,22 @@ package ru.yandex.practicum.compilation.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.common.EntityValidator;
 import ru.yandex.practicum.compilation.dto.CompilationDto;
 import ru.yandex.practicum.compilation.dto.NewCompilationDto;
 import ru.yandex.practicum.compilation.dto.UpdateCompilationRequest;
-import ru.yandex.practicum.exception.ConflictException;
-import ru.yandex.practicum.exception.NotFoundException;
 import ru.yandex.practicum.compilation.mapper.CompilationMapper;
 import ru.yandex.practicum.compilation.model.Compilation;
-import ru.yandex.practicum.event.model.Event;
 import ru.yandex.practicum.compilation.repository.CompilationRepository;
 import ru.yandex.practicum.event.dao.EventRepository;
-import ru.yandex.practicum.common.EntityValidator;
+import ru.yandex.practicum.event.model.Event;
+import ru.yandex.practicum.exception.ConflictException;
+import ru.yandex.practicum.exception.NotFoundException;
 
 import java.util.List;
 
@@ -54,7 +55,7 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto updateCompilation(Long compId, UpdateCompilationRequest request) {
         log.info("Обновление подборки с id: {}", compId);
 
-        Compilation compilation = entityValidator.ensureExists(
+        Compilation compilation = entityValidator.ensureAndGet(
                 compilationRepository, compId, "Подборка"
         );
 
@@ -99,7 +100,7 @@ public class CompilationServiceImpl implements CompilationService {
         log.info("Получение подборки с pinned={}, from={}, size={}", pinned, from, size);
 
         Pageable pageable = PageRequest.of(from / size, size);
-        var compilationsPage = compilationRepository.findAllByPinned(pinned, pageable);
+        Page<Compilation> compilationsPage = compilationRepository.findByPinned(pinned, pageable);
 
         return compilationMapper.toDtoList(compilationsPage.getContent());
     }
@@ -109,7 +110,7 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto getCompilationById(Long compId) {
         log.info("Получение подборки по id: {}", compId);
 
-        Compilation compilation = entityValidator.ensureExists(
+        Compilation compilation = entityValidator.ensureAndGet(
                 compilationRepository, compId, "Подборка"
         );
 

@@ -40,7 +40,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(Long id) {
-        User user = entityValidator.ensureExists(userRepository, id, "Пользователь");
+        User user = entityValidator.ensureAndGet(userRepository, id, "Пользователь");
         return userMapper.toDto(user);
     }
 
@@ -68,7 +68,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto updateUser(Long id, UserDto userDto) {
-        User user = entityValidator.ensureExists(userRepository, id, "Пользователь");
+        User user = entityValidator.ensureAndGet(userRepository, id, "Пользователь");
 
         if (userDto.getEmail() != null && !userDto.getEmail().isBlank()) {
             ensureEmailUnique(userDto.getEmail(), id);
