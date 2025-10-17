@@ -55,9 +55,11 @@ public class EventService {
                 PageRequest.of(query.from() / query.size(), query.size())));
 
         if (dtos != null && !dtos.isEmpty()) {
-            var uris = dtos.stream().map(d -> "/events/" + d.getId()).collect(Collectors.toList());
+            List<String> uris = dtos.stream()
+                    .map(d -> "/events/" + d.getId())
+                    .collect(Collectors.toList());
             saveHit();
-            var hits = fetchHitsForUris(uris);
+            Map<String, Long> hits = fetchHitsForUris(uris);
             for (EventShortDto dto : dtos) {
                 dto.setViews(hits.getOrDefault("/events/" + dto.getId(), 0L));
             }
@@ -93,8 +95,8 @@ public class EventService {
     public EventFullDto findUserEventById(long userId, long eventId) {
         EventFullDto dto = eventMapper.toEventFullDto(findByIdAndUser(eventId, userId));
         if (dto != null) {
-            var uri = "/events/" + dto.getId();
-            var hits = fetchHitsForUris(List.of(uri));
+            String uri = "/events/" + dto.getId();
+            Map<String, Long> hits = fetchHitsForUris(List.of(uri));
             dto.setViews(hits.getOrDefault(uri, 0L));
         }
         return dto;
@@ -149,8 +151,8 @@ public class EventService {
         List<EventShortDto> dtos = eventMapper.toEventsShortDto(eventRepository.searchEventsByPublic(filter));
 
         if (dtos != null && !dtos.isEmpty()) {
-            var uris = dtos.stream().map(d -> "/events/" + d.getId()).collect(Collectors.toList());
-            var hits = fetchHitsForUris(uris);
+            List<String> uris = dtos.stream().map(d -> "/events/" + d.getId()).collect(Collectors.toList());
+            Map<String, Long> hits = fetchHitsForUris(uris);
             for (EventShortDto dto : dtos) {
                 dto.setViews(hits.getOrDefault("/events/" + dto.getId(), 0L));
             }
@@ -171,8 +173,8 @@ public class EventService {
         EventFullDto dto = eventMapper.toEventFullDto(event);
         if (dto != null) {
             saveHit();
-            var uri = "/events/" + dto.getId();
-            var hits = fetchHitsForUris(List.of(uri));
+            String uri = "/events/" + dto.getId();
+            Map<String, Long> hits = fetchHitsForUris(List.of(uri));
             dto.setViews(hits.getOrDefault(uri, 0L));
         }
 
@@ -185,8 +187,10 @@ public class EventService {
         setConfirmedRequestsForEvents(dtos);
 
         if (dtos != null && !dtos.isEmpty()) {
-            var uris = dtos.stream().map(d -> "/events/" + d.getId()).collect(Collectors.toList());
-            var hits = fetchHitsForUris(uris);
+            List<String> uris = dtos.stream()
+                    .map(d -> "/events/" + d.getId())
+                    .collect(Collectors.toList());
+            Map<String, Long> hits = fetchHitsForUris(uris);
             for (EventFullDto dto : dtos) {
                 dto.setViews(hits.getOrDefault("/events/" + dto.getId(), 0L));
             }
@@ -238,36 +242,24 @@ public class EventService {
 
     private void saveHit() {
         try {
-            String ip = extractClientIp();
             EndpointHitDto hitDto = EndpointHitDto.builder()
                     .app("ewm-main-service")
                     .uri(request.getRequestURI())
-                    .ip(ip)
+                    .ip(request.getRemoteAddr())
                     .timestamp(LocalDateTime.now())
                     .build();
+
             statsClient.saveHit(hitDto);
         } catch (Exception e) {
             log.error("Не удалось отправить информацию о просмотре в сервис статистики: {}", e.getMessage());
         }
     }
 
-    private String extractClientIp() {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            return xff.split(",")[0].trim();
-        }
-        String xReal = request.getHeader("X-Real-IP");
-        if (xReal != null && !xReal.isBlank()) {
-            return xReal.trim();
-        }
-        return request.getRemoteAddr();
-    }
-
     private Map<String, Long> fetchHitsForUris(List<String> uris) {
         try {
             LocalDateTime start = LocalDateTime.now().minusYears(10);
             LocalDateTime end = LocalDateTime.now().plusDays(1);
-            var stats = statsClient.getStats(start, end, uris, true);
+            List<ViewStatsDto> stats = statsClient.getStats(start, end, uris, true);
             if (stats == null || stats.isEmpty()) return Map.of();
             return stats.stream().collect(Collectors.toMap(
                     ViewStatsDto::getUri, v -> v.getHits() == null ? 0L : v.getHits()));
