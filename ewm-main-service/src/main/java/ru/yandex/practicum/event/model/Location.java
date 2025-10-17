@@ -1,12 +1,19 @@
-package ru.yandex.practicum.location.dto;
+package ru.yandex.practicum.event.model;
 
+
+import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Embeddable
 @Data
-public class LocationDto {
+@NoArgsConstructor
+@AllArgsConstructor
+public class Location {
     @NotNull(message = "Широта (lat) не может быть null")
     @DecimalMin(value = "-90.0", message = "Широта (lat) не может быть меньше -90.0")
     @DecimalMax(value = "90.0", message = "Широта (lat) не может быть больше 90.0")

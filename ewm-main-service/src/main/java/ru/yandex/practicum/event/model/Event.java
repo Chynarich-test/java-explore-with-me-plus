@@ -5,7 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import ru.yandex.practicum.category.model.Category;
-import ru.yandex.practicum.location.model.Location;
 import ru.yandex.practicum.request.model.Request;
 import ru.yandex.practicum.user.model.User;
 
@@ -34,8 +33,7 @@ public class Event {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "initiator_id", nullable = false)
     private User initiator;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "location_id", nullable = false)
+    @Embedded
     private Location location;
     @Column(name = "title", nullable = false)
     private String title;

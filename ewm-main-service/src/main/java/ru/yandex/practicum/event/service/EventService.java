@@ -25,9 +25,6 @@ import ru.yandex.practicum.exception.ExistException;
 import ru.yandex.practicum.exception.InvalidDateRangeException;
 import ru.yandex.practicum.exception.NotFoundException;
 import ru.yandex.practicum.exception.ValidationException;
-import ru.yandex.practicum.location.dao.LocationRepository;
-import ru.yandex.practicum.location.dto.LocationDto;
-import ru.yandex.practicum.location.model.Location;
 import ru.yandex.practicum.request.dto.ConfirmedRequestCount;
 import ru.yandex.practicum.request.model.RequestStatus;
 import ru.yandex.practicum.request.repository.RequestRepository;
@@ -46,7 +43,6 @@ import java.util.stream.Collectors;
 public class EventService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
-    private final LocationRepository locationRepository;
     private final EventMapper eventMapper;
     private final RequestRepository requestRepository;
 
@@ -72,7 +68,7 @@ public class EventService {
 
     @Transactional
     public EventFullDto createEvent(long userId, NewEventDto eventDto) {
-        User owner = entityValidator.ensureExists(userRepository, userId, "User");
+        User owner = entityValidator.ensureAndGet(userRepository, userId, "User");
 
         if (eventDto.getEventDate() != null) {
             LocalDateTime now = LocalDateTime.now();
@@ -81,12 +77,10 @@ public class EventService {
             }
         }
 
-        Location location = getOrCreateLocation(eventDto.getLocation());
-
 
         Event event = eventMapper.fromNewEventDto(eventDto);
         event.setInitiator(owner);
-        event.setLocation(location);
+
 
         event.setState(EventState.PENDING);
 
@@ -95,18 +89,6 @@ public class EventService {
         return eventMapper.toEventFullDto(savedItem);
     }
 
-    private Location getOrCreateLocation(LocationDto locationDto) {
-        float lat = locationDto.getLat();
-        float lon = locationDto.getLon();
-
-        return locationRepository.findByLatAndLon(lat, lon)
-                .orElseGet(() -> {
-                    Location newLocation = new Location();
-                    newLocation.setLat(lat);
-                    newLocation.setLon(lon);
-                    return locationRepository.save(newLocation);
-                });
-    }
 
     public EventFullDto findUserEventById(long userId, long eventId) {
         EventFullDto dto = eventMapper.toEventFullDto(findByIdAndUser(eventId, userId));
@@ -229,7 +211,7 @@ public class EventService {
 
     @Transactional
     public EventFullDto moderateEvent(Long eventId, UpdateEventAdminRequest adminRequest) {
-        Event event = entityValidator.ensureExists(eventRepository, eventId, "Event");
+        Event event = entityValidator.ensureAndGet(eventRepository, eventId, "Event");
 
         if (adminRequest.getEventDate() != null) {
             LocalDateTime now = LocalDateTime.now();
@@ -249,11 +231,6 @@ public class EventService {
             } else {
                 throw new ExistException("Cannot publish the event because it's not in the right state: PUBLISHED");
             }
-        }
-
-        if (adminRequest.getLocation() != null) {
-            Location location = getOrCreateLocation(adminRequest.getLocation());
-            event.setLocation(location);
         }
 
         return eventMapper.toEventFullDto(eventRepository.save(event));

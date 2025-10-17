@@ -54,7 +54,7 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto updateCompilation(Long compId, UpdateCompilationRequest request) {
         log.info("Обновление подборки с id: {}", compId);
 
-        Compilation compilation = entityValidator.ensureExists(
+        Compilation compilation = entityValidator.ensureAndGet(
                 compilationRepository, compId, "Подборка"
         );
 
@@ -109,7 +109,7 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto getCompilationById(Long compId) {
         log.info("Получение подборки по id: {}", compId);
 
-        Compilation compilation = entityValidator.ensureExists(
+        Compilation compilation = entityValidator.ensureAndGet(
                 compilationRepository, compId, "Подборка"
         );
 

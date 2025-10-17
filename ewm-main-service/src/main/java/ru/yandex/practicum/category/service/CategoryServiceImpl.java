@@ -39,7 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void deleteCategory(Long catId) {
-        Category category = entityValidator.ensureExists(categoryRepository, catId, "Категория");
+        Category category = entityValidator.ensureAndGet(categoryRepository, catId, "Категория");
 
         long relatedEvents = eventRepository.countByCategoryId(catId);
         if (relatedEvents > 0) {
@@ -52,7 +52,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public CategoryDto updateCategory(Long catId, CategoryDto categoryDto) {
-        Category existing = entityValidator.ensureExists(categoryRepository, catId, "Категория");
+        Category existing = entityValidator.ensureAndGet(categoryRepository, catId, "Категория");
 
         if (!existing.getName().equalsIgnoreCase(categoryDto.getName())
                 && categoryRepository.existsByName(categoryDto.getName())) {
@@ -77,7 +77,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDto getCategory(Long catId) {
-        Category category = entityValidator.ensureExists(categoryRepository, catId, "Категория");
+        Category category = entityValidator.ensureAndGet(categoryRepository, catId, "Категория");
         return mapper.toDto(category);
     }
 }

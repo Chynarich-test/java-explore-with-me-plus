@@ -3,7 +3,7 @@ package ru.yandex.practicum.event.dto;
 import lombok.Data;
 import ru.yandex.practicum.category.dto.CategoryDto;
 import ru.yandex.practicum.event.model.EventState;
-import ru.yandex.practicum.location.dto.LocationDto;
+import ru.yandex.practicum.event.model.Location;
 import ru.yandex.practicum.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
@@ -18,7 +18,7 @@ public class EventFullDto {
     private String description;
     private String eventDate;
     private UserShortDto initiator;
-    private LocationDto location;
+    private Location location;
     private boolean paid;
     private int participantLimit;
     private LocalDateTime publishedOn;
