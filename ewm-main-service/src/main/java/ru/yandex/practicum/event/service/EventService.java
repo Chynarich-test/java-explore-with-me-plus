@@ -7,10 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.client.StatsClient;
-import ru.yandex.practicum.comment.dto.CommentDto;
-import ru.yandex.practicum.comment.mapper.CommentMapper;
-import ru.yandex.practicum.comment.model.Comment;
-import ru.yandex.practicum.comment.repository.CommentRepository;
 import ru.yandex.practicum.common.EntityValidator;
 import ru.yandex.practicum.dto.EndpointHitDto;
 import ru.yandex.practicum.dto.ViewStatsDto;
@@ -48,9 +44,7 @@ public class EventService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
-    private final CommentMapper commentMapper;
     private final RequestRepository requestRepository;
-    private final CommentRepository commentRepository;
 
     private final StatsClient statsClient;
     private final HttpServletRequest request;
@@ -273,73 +267,5 @@ public class EventService {
             log.error("Не удалось получить просмотры из сервиса статистики: {}", e.getMessage());
             return Map.of();
         }
-    }
-
-    // Опционально, так как не знаю как поведут себя тесты постмана
-    // В основные методы событий пока добавлять не стал, что бы потом не запутаться
-    private void enrichEventsWithComments(List<EventFullDto> dtos) {
-        if (dtos.isEmpty()) return;
-
-        List<Long> eventIds = dtos.stream()
-                .map(EventFullDto::getId)
-                .toList();
-
-        List<Object[]> counts = commentRepository.countCommentsForEvents(eventIds);
-        Map<Long, Long> countMap = counts.stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (Long) row[1]
-                ));
-
-        List<Comment> allComments = commentRepository.findRecentCommentsForEvents(eventIds);
-        Map<Long, List<CommentDto>> latestMap = allComments.stream()
-                .collect(Collectors.groupingBy(
-                        c -> c.getEvent().getId(),
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                list -> list.stream()
-                                        .sorted(Comparator.comparing(Comment::getCreatedOn).reversed())
-                                        .limit(3)
-                                        .map(commentMapper::toDto)
-                                        .toList()
-                        )
-                ));
-
-        dtos.forEach(dto -> {
-            dto.setCommentsCount(countMap.getOrDefault(dto.getId(), 0L));
-            dto.setLatestComments(latestMap.getOrDefault(dto.getId(), List.of()));
-        });
-    }
-
-    private void enrichShortEventsWithComments(List<EventShortDto> dtos) {
-        if (dtos.isEmpty()) return;
-
-        List<Long> eventIds = dtos.stream().map(EventShortDto::getId).toList();
-
-        List<Object[]> counts = commentRepository.countCommentsForEvents(eventIds);
-        Map<Long, Long> countMap = counts.stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (Long) row[1]
-                ));
-
-        List<Comment> allComments = commentRepository.findRecentCommentsForEvents(eventIds);
-        Map<Long, List<CommentDto>> latestMap = allComments.stream()
-                .collect(Collectors.groupingBy(
-                        c -> c.getEvent().getId(),
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                list -> list.stream()
-                                        .sorted(Comparator.comparing(Comment::getCreatedOn).reversed())
-                                        .limit(3)
-                                        .map(commentMapper::toDto)
-                                        .toList()
-                        )
-                ));
-
-        dtos.forEach(dto -> {
-            dto.setCommentsCount(countMap.getOrDefault(dto.getId(), 0L));
-            dto.setLatestComments(latestMap.getOrDefault(dto.getId(), List.of()));
-        });
     }
 }

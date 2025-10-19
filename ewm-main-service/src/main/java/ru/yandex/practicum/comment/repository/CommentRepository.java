@@ -4,7 +4,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
 import ru.yandex.practicum.comment.model.Comment;
 
 import java.util.List;
@@ -35,24 +34,4 @@ public interface CommentRepository extends JpaRepository<Comment, Long>, JpaSpec
 
         return findAll(spec, pageable).getContent();
     }
-
-    // Опционально, так как не знаю как поведут себя тесты постмана
-
-    // Кол-во комментариев по списку событий
-    @Query("""
-        SELECT c.event.id, COUNT(c)
-        FROM Comment c
-        WHERE c.event.id IN :eventIds
-        GROUP BY c.event.id
-    """)
-    List<Object[]> countCommentsForEvents(List<Long> eventIds);
-
-    // Последние комментарии (например, 3 штуки на событие)
-    @Query("""
-        SELECT c
-        FROM Comment c
-        WHERE c.event.id IN :eventIds
-        ORDER BY c.createdOn DESC
-    """)
-    List<Comment> findRecentCommentsForEvents(List<Long> eventIds);
 }

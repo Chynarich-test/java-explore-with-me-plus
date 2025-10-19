@@ -1,10 +1,11 @@
 package ru.yandex.practicum.comment.controller;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.comment.dto.CommentDto;
+import ru.yandex.practicum.comment.dto.UpdateCommentDto;
 import ru.yandex.practicum.comment.service.CommentService;
 import ru.yandex.practicum.user.dto.PageParams;
 
@@ -38,11 +39,11 @@ public class CommentAdminController {
 
     // Редактировать комментарий (например, для модерации)
     @PatchMapping("/{commentId}")
-    public CommentDto updateCommentText(
+    public CommentDto updateComment(
             @PathVariable Long commentId,
-            @RequestBody @NotBlank String newText
+            @Valid @RequestBody UpdateCommentDto dto
     ) {
-        return commentService.adminUpdateComment(commentId, newText);
+        return commentService.adminUpdateComment(commentId, dto.getText());
     }
 
     // Удалить комментарий (soft)

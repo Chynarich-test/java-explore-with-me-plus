@@ -33,9 +33,6 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public CommentDto addComment(Long userId, Long eventId, NewCommentDto dto) {
-        if (dto == null || dto.getText() == null || dto.getText().isBlank()) {
-            throw new ValidationException("Комментарий не может быть пустым");
-        }
         User author = entityValidator.ensureAndGet(userRepository, userId, "Пользователь");
         Event event = entityValidator.ensureAndGet(eventRepository, eventId, "Событие");
 

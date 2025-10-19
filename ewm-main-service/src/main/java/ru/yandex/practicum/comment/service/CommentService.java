@@ -20,7 +20,7 @@ public interface CommentService {
     List<CommentDto> getCommentsByEvent(Long eventId, PageParams pageParams);
 
     // Admin методы
-    List<CommentDto> getAllComments(Long eventId, Long authorId, Boolean includeDeleted, ru.yandex.practicum.user.dto.PageParams pageParams);
+    List<CommentDto> getAllComments(Long eventId, Long authorId, Boolean includeDeleted, PageParams pageParams);
 
     CommentDto adminUpdateComment(Long commentId, String text);
 
