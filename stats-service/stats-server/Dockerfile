@@ -5,6 +5,7 @@ RUN java -Djarmode=layertools -jar app.jar extract
 
 FROM amazoncorretto:21-alpine
 WORKDIR application
+RUN apk add --no-cache wget
 COPY --from=builder /application/dependencies/ ./
 COPY --from=builder /application/spring-boot-loader/ ./
 COPY --from=builder /application/snapshot-dependencies/ ./

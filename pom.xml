@@ -28,6 +28,10 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <lombok.version>1.18.30</lombok.version>
+        <querydsl.version>5.0.0</querydsl.version>
+        <jakarta-persistence-api.version>3.2.0</jakarta-persistence-api.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <mapstruct-binding.version>0.2.0</mapstruct-binding.version>
     </properties>
 
     <dependencies>
