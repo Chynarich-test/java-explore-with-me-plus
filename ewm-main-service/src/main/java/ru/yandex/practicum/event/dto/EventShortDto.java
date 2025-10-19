@@ -3,9 +3,11 @@ package ru.yandex.practicum.event.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import ru.yandex.practicum.category.dto.CategoryDto;
+import ru.yandex.practicum.comment.dto.CommentDto;
 import ru.yandex.practicum.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Data
@@ -20,4 +22,8 @@ public class EventShortDto {
     private boolean paid;
     private String title;
     private long views;
+
+    // Новые поля (опционально, так как не знаю как поведут себя тесты постмана)
+    private long commentsCount;
+    private List<CommentDto> latestComments;
 }

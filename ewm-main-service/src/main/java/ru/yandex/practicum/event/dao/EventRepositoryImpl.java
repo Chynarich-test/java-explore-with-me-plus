@@ -1,6 +1,7 @@
 package ru.yandex.practicum.event.dao;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import ru.yandex.practicum.event.dto.enums.EventSort;
@@ -89,7 +90,7 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
         }
 
 
-        var query = queryFactory
+        JPQLQuery<Event> query = queryFactory
                 .selectFrom(event)
                 .where(where);
 
