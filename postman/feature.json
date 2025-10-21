@@ -790,7 +790,9 @@
 					"    } catch(err) {",
 					"        console.error('Ошибка при подготовке базовых данных:', err);",
 					"    }",
-					"})();"
+					"})();",
+					"",
+					""
 				]
 			}
 		},
@@ -828,11 +830,11 @@
 			"value": ""
 		},
 		{
-			"key": "API",
+			"key": "RandomUtils",
 			"value": ""
 		},
 		{
-			"key": "RandomUtils",
+			"key": "API",
 			"value": ""
 		}
 	]
