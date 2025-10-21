@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.comment.dto.CommentAdminFilter;
 import ru.yandex.practicum.comment.dto.CommentDto;
 import ru.yandex.practicum.comment.dto.UpdateCommentDto;
 import ru.yandex.practicum.comment.service.CommentService;
@@ -20,15 +21,14 @@ public class CommentAdminController {
 
     // Получить список комментариев (все, по пользователю или событию, с флагом includeDeleted)
     @GetMapping
-    public List<CommentDto> getAllComments(
-            @RequestParam(required = false) Long eventId,
-            @RequestParam(required = false) Long authorId,
-            @RequestParam(required = false, defaultValue = "false") Boolean includeDeleted,
-            @RequestParam(required = false, defaultValue = "0") int from,
-            @RequestParam(required = false, defaultValue = "10") int size
-    ) {
-        PageParams params = new PageParams(from, size);
-        return commentService.getAllComments(eventId, authorId, includeDeleted, params);
+    public List<CommentDto> getAllComments(@ModelAttribute CommentAdminFilter filter) {
+        PageParams params = new PageParams(filter.getFrom(), filter.getSize());
+        return commentService.getAllComments(
+                filter.getEventId(),
+                filter.getAuthorId(),
+                filter.getIncludeDeleted(),
+                params
+        );
     }
 
     //Получить конкретный комментарий (включая удалённые)
